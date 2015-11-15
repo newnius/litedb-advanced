@@ -21,43 +21,43 @@ import net.sf.jsqlparser.statement.update.Update;
 public class ChooseImp {
 	static Implementation choose(Statement statement)
 	{
-		Implementation implementation=null;
-		ChooseImp chooseImp=new ChooseImp();
+		Implementation implementation = null;
+		ChooseImp chooseImp = new ChooseImp();
 		if(statement instanceof Select)
 		{
-			implementation=chooseImp.chooseFromSelect((Select)statement);
+			implementation = chooseImp.chooseFromSelect((Select)statement);
 		}
 		else if(statement instanceof Insert)
 		{
-			implementation=chooseImp.chooseFromInsert((Insert)statement);
+			implementation = chooseImp.chooseFromInsert((Insert)statement);
 		}
 		else if(statement instanceof Update)
 		{
-			implementation=chooseImp.chooseFromUpdate((Update)statement);
+			implementation = chooseImp.chooseFromUpdate((Update)statement);
 		}
 		else if(statement instanceof Delete)
 		{
-			implementation=chooseImp.chooseFromDelete((Delete)statement);
+			implementation = chooseImp.chooseFromDelete((Delete)statement);
 		}
 		else if(statement instanceof Drop)
 		{
-			implementation=chooseImp.chooseFromDrop((Drop)statement);
+			implementation = chooseImp.chooseFromDrop((Drop)statement);
 		}
 		else if(statement instanceof Alter)
 		{
-			implementation=chooseImp.chooseFromAlter((Alter)statement);
+			implementation = chooseImp.chooseFromAlter((Alter)statement);
 		}
 		else if(statement instanceof CreateIndex)
 		{
-			implementation=chooseImp.chooseFromCreateIndex((CreateIndex)statement);
+			implementation = chooseImp.chooseFromCreateIndex((CreateIndex)statement);
 		}
 		else if(statement instanceof CreateTable)
 		{
-			implementation=chooseImp.chooseFromCreateTable((CreateTable)statement);
+			implementation = chooseImp.chooseFromCreateTable((CreateTable)statement);
 		}
 		else if(statement instanceof CreateView)
 		{
-			implementation=chooseImp.chooseFromCreateView((CreateView)statement);
+			implementation = chooseImp.chooseFromCreateView((CreateView)statement);
 		}
 		return implementation;
 	}
@@ -93,7 +93,7 @@ public class ChooseImp {
 	}
 	private Implementation chooseFromCreateIndex(CreateIndex statement)
 	{
-		CreateIndexImplementation implementation = null;
+		CreateIndexImplementation implementation=null;
 		return implementation;
 	}	
 	private Implementation chooseFromCreateTable(CreateTable statement)
