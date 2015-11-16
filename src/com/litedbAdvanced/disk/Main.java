@@ -1,10 +1,10 @@
 package com.litedbAdvanced.disk;
 
-<<<<<<< HEAD
+
 import java.io.File;
 
-=======
->>>>>>> newnius/master
+
+
 import com.litedbAdvanced.global.Line;
 import com.litedbAdvanced.global.TableDef;
 
@@ -17,7 +17,7 @@ public class Main {
 	}
 	
 	//创建文件并保存数据字典
-<<<<<<< HEAD
+
 	public static boolean createTable(byte[] tableName, TableDef tabelDef){
 		
 		String path;
@@ -47,7 +47,7 @@ public class Main {
 	public static boolean insertRow(Line newRow){return true;}
 	
 	
-=======
+
 	static boolean createTable(byte[] tableName, TableDef tabelDef){
 		return false;
 	}
@@ -76,7 +76,7 @@ public class Main {
 	static boolean insertRow(Line newRow){
 		return false;
 	}
->>>>>>> newnius/master
+
 	
 	public static void main(String[] args){
 		
