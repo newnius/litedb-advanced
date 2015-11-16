@@ -93,17 +93,17 @@ public class ChooseImp {
 	}
 	private Implementation chooseFromCreateIndex(CreateIndex statement)
 	{
-		CreateIndexImplementation implementation=null;
+		CreateIndexImplementation implementation=new FormalCreateIndexImplementation();
 		return implementation;
 	}	
 	private Implementation chooseFromCreateTable(CreateTable statement)
 	{
-		CreateTableImplementation implementation = null;
+		CreateTableImplementation implementation = new FormalCreateTableImplementation();
 		return implementation;
 	}	
 	private Implementation chooseFromCreateView(CreateView statement)
 	{
-		CreateViewImplementation implementation = null;
+		CreateViewImplementation implementation = new FormalCreateViewImplementation();
 		return implementation;
 	}
 }
