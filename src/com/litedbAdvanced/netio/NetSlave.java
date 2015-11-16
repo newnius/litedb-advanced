@@ -34,7 +34,7 @@ class NetSlave extends Thread{
             while (Config.isDBPrepared()&&Config.isRemoteAccessAvailable()) {
                 String query = reader.readLine();
                 Logger.getLogger(NetSlave.class.getName()).log(Level.INFO, null, "Received：" + query);
-                if(query.toLowerCase().equals("quit")){
+                if(query.toLowerCase().equals("quit;")){
                     break;
                 } else {
                     out.println(slave.execute(query.getBytes()));
