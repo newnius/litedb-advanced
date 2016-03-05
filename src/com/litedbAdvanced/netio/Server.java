@@ -3,34 +3,31 @@ package com.litedbAdvanced.netio;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import com.litedbAdvanced.global.Config;
+import com.litedbAdvanced.util.LiteLogger;
 
 /**
 *
 * @author Newnius
 */
 public class Server extends Thread {
-
-   public Server() {
-
-   }
+	private final String TAG = "SOCKET";
+	private ServerSocket server;
 
    @Override
    public void run() {
        try {
-           ServerSocket server = new ServerSocket(Config.getPort());//创建服务器套接字
-           Logger.getLogger(Server.class.getName()).log(Level.INFO, null, "Server opened, waiting for client.");
-           while (Config.isDBPrepared()&&Config.isRemoteAccessAvailable()) {
-               Socket socket = server.accept();//等待客户端连接
+           server = new ServerSocket(Config.getPort());    
+           LiteLogger.info(TAG, "Socket server opened, waiting for client.");
+           while ( Config.isRemoteAccessAvailable()) {
+               Socket socket = server.accept();
                new NetSlave(socket).start();
            }
            server.close();
+           LiteLogger.info(TAG, "Socket server closed.");
        } catch (IOException e) {
-           //e.printStackTrace();
+    	   LiteLogger.info(TAG, "Socket server can not be started.");
        }
-       
    }
 }

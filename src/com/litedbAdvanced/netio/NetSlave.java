@@ -5,20 +5,18 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import com.litedbAdvanced.Slave;
+import com.google.gson.Gson;
 import com.litedbAdvanced.global.Config;
+import com.litedbAdvanced.util.LiteLogger;
 
 
 class NetSlave extends Thread{
+	private final static String TAG = "SOCKET";
 	private final Socket socket;
-    private Slave slave;
 	
 	public NetSlave(Socket socket){
         this.socket=socket;
-        this.slave = new Slave();
     }
     
     @Override
@@ -27,25 +25,25 @@ class NetSlave extends Thread{
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));//获得客户端的输入流
             PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"), true);//获得客户端输出流)
             if (socket.isConnected()) {
-                Logger.getLogger(NetSlave.class.getName()).log(Level.INFO, null, "Accept " + socket.getInetAddress().getHostAddress());
-                out.println("Welcome");
+                LiteLogger.info(TAG, "Accept " + socket.getInetAddress().getHostAddress() + ":" + socket.getPort() );
+                out.println(new Gson().toJson(new Message(Message.CONNECTION_CREATED, "")));
             }
 
-            while (Config.isDBPrepared()&&Config.isRemoteAccessAvailable()) {
+            while ( Config.isRemoteAccessAvailable()) {
                 String query = reader.readLine();
-                Logger.getLogger(NetSlave.class.getName()).log(Level.INFO, null, "Received：" + query);
+                LiteLogger.info(TAG, "Received：" + query);
+                
                 if(query.toLowerCase().equals("quit;")){
                     break;
                 } else {
-                    out.println(slave.execute(query.getBytes()));
+                    out.println(new Gson().toJson(new Message(0, query)));
                 }
             }
-            out.println("Connection is closing.");
+            out.println(new Gson().toJson(new Message(Message.CONNECTION_CLOSED, "")));
             socket.close();
         } catch (Exception e) {
-            //Logger.getLogger(RemoteAccess.class.getName()).log(Level.INFO, null, e);
+        	LiteLogger.info(TAG, socket.getInetAddress().getHostAddress() + ":" + socket.getPort() + " disconnected.");
         }        
     }
     
 }
-
