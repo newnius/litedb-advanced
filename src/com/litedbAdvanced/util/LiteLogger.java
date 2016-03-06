@@ -11,6 +11,12 @@ public class LiteLogger {
 		}
 	}
 	
+	public static void error(String tag, Exception ex){
+		if(tags.contains(tag)){
+			ex.printStackTrace();
+		}
+	}
+	
 	public static void addTag(String tag){
 		if(!tags.contains(tag)){
 			tags.add(tag);

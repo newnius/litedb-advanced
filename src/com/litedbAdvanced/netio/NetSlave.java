@@ -28,6 +28,8 @@ class NetSlave extends Thread{
                 LiteLogger.info(TAG, "Accept " + socket.getInetAddress().getHostAddress() + ":" + socket.getPort() );
                 out.println(new Gson().toJson(new Message(Message.CONNECTION_CREATED, "")));
             }
+            
+            com.litedbAdvanced.execute.Main executor = new com.litedbAdvanced.execute.Main();
 
             while ( Config.isRemoteAccessAvailable()) {
                 String query = reader.readLine();
@@ -37,13 +39,14 @@ class NetSlave extends Thread{
                     break;
                 } else {
                     out.println(new Gson().toJson(new Message(0, query)));
+                	executor.execute(query.replace(";", ""));
                 }
             }
             out.println(new Gson().toJson(new Message(Message.CONNECTION_CLOSED, "")));
             socket.close();
         } catch (Exception e) {
         	LiteLogger.info(TAG, socket.getInetAddress().getHostAddress() + ":" + socket.getPort() + " disconnected.");
-        }        
+        }
     }
     
 }
