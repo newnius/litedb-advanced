@@ -1,17 +1,24 @@
 package com.litedbAdvanced.netio;
 
-import com.litedbAdvanced.global.Config;
+import com.litedbAdvanced.util.Config;
 
 public class Main {
 	private static Server server;
-	
-	public static void init(){
-		Config.setRemoteAccessAvailable(true);
-		server = new Server();
+	private static boolean remoteAccessAvailable = false;
+
+	public static void init() {
+		remoteAccessAvailable = true;
+		server = new Server(Config.getPort());
 		server.start();
 	}
-	
-	public static void close(){
-		Config.setRemoteAccessAvailable(false);
+
+	public static void close() {
+		remoteAccessAvailable = false;
 	}
+
+	public static boolean isRemoteAccessAvailable() {
+		return remoteAccessAvailable;
+	}
+	
+	
 }

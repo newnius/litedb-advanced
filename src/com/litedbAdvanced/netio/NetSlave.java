@@ -7,7 +7,6 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 import com.google.gson.Gson;
-import com.litedbAdvanced.global.Config;
 import com.litedbAdvanced.util.LiteLogger;
 
 
@@ -31,15 +30,15 @@ class NetSlave extends Thread{
             
             com.litedbAdvanced.execute.Main executor = new com.litedbAdvanced.execute.Main();
 
-            while ( Config.isRemoteAccessAvailable()) {
+            while ( Main.isRemoteAccessAvailable()) {
                 String query = reader.readLine();
                 LiteLogger.info(TAG, "Received：" + query);
                 
                 if(query.toLowerCase().equals("quit;")){
                     break;
                 } else {
-                    out.println(new Gson().toJson(new Message(0, query)));
-                	executor.execute(query.replace(";", ""));
+                    executor.execute(query.replace(";", ""));
+                    out.println("ok");
                 }
             }
             out.println(new Gson().toJson(new Message(Message.CONNECTION_CLOSED, "")));

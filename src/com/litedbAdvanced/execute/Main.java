@@ -1,6 +1,9 @@
 package com.litedbAdvanced.execute;
 
-import com.litedbAdvanced.transaction.LockManager;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+
 import com.litedbAdvanced.transaction.Transaction;
 import com.litedbAdvanced.util.LiteLogger;
 
@@ -8,6 +11,7 @@ public class Main {
 	public static final String TAG = "EXECUTOR";
 	private boolean autoCommit = true;
 	private Transaction transaction = null;
+	public static ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("js");
 
 	public void setAutoCommit(boolean autoCommit) {
 		this.autoCommit = autoCommit;
@@ -18,18 +22,6 @@ public class Main {
 			return;
 		String[] params = command.split(" ");
 		switch (params[0]) {
-		case "SLock":
-			SLock(params);
-			break;
-		case "unSLock":
-			unSLock(params);
-			break;
-		case "XLock":
-			XLock(params);
-			break;
-		case "unXLock":
-			unXLock(params);
-			break;
 		case "begin":
 			begin();
 			break;
@@ -39,6 +31,12 @@ public class Main {
 		case "write":
 			write(params);
 			break;
+		case "savepoint":
+			savepoint(params);
+			break;
+		case "rollback":
+			rollback(params);
+			break;
 		case "commit":
 			commit();
 			break;
@@ -46,71 +44,84 @@ public class Main {
 		default:
 			LiteLogger.info(TAG, "Unknown command.");
 		}
-		if (autoCommit)
-			commit();
+		return;
 	}
 
 	public void begin() {
 		transaction = new Transaction();
 		autoCommit = false;
-		LiteLogger.info(TAG, "Transaction begin.(Tid=" + transaction.getTransactionId() + ")");
 	}
 
 	public void commit() {
 		transaction.commit();
-		LiteLogger.info(TAG, "Transaction commited.(Tid=" + transaction.getTransactionId() + ")");
+		transaction = null;
+		autoCommit = true;
+	}
+	
+	public void savepoint(String[] args){
+		if(args.length < 2){
+			LiteLogger.info(Main.TAG, "point name not specified.");
+		}
+		transaction.savePoint(args[1]);
+		
+	}
+	
+	public void rollback(String[]args){
+		if(transaction == null){
+			LiteLogger.info(TAG, "transaction not exist.");
+		}
+		else if(args.length == 1){
+			transaction.abort();
+			transaction = null;
+			autoCommit = true;
+		}
+		else if (args.length < 2) {
+			LiteLogger.info(TAG, "savepoint not specified.");
+			return;
+		}
+		transaction.rollback(args[1]);
+	}
+	
+	private void beforeAccess(){
+		if(transaction == null)
+			transaction = new Transaction();
+	}
+	
+	private void afterAccess(){
+		if(autoCommit)
+			commit();
 	}
 
 	public void read(String[] args) {
+		beforeAccess();
 		if (args.length < 2) {
 			LiteLogger.info(TAG, "RID not specified.");
 			return;
 		}
-		SLock(args);
+		transaction.read(Long.parseLong(args[1]));
+		afterAccess();
 	}
 
 	public void write(String[] args) {
+		beforeAccess();
 		if (args.length < 2) {
 			LiteLogger.info(TAG, "RID not specified.");
 			return;
 		}
-		XLock(args);
+		transaction.write(Long.parseLong(args[1]));
+		afterAccess();
 	}
-
-	public static void SLock(String[] args) {
-		if (args.length < 2) {
-			LiteLogger.info("MAIN", "RID not specified.");
-			return;
-		}
-		int rid = Integer.parseInt(args[1]);
-		LockManager.SLockRID(rid);
-	}
-
-	public static void unSLock(String[] args) {
-		if (args.length < 2) {
-			LiteLogger.info("MAIN", "RID not specified.");
-			return;
-		}
-		int rid = Integer.parseInt(args[1]);
-		LockManager.unSLockRID(rid);
-	}
-
-	public static void XLock(String[] args) {
-		if (args.length < 2) {
-			LiteLogger.info("MAIN", "RID not specified.");
-			return;
-		}
-		int rid = Integer.parseInt(args[1]);
-		LockManager.XLockRID(rid);
-	}
-
-	public static void unXLock(String[] args) {
-		if (args.length < 2) {
-			LiteLogger.info("MAIN", "RID not specified.");
-			return;
-		}
-		int rid = Integer.parseInt(args[1]);
-		LockManager.unXLockRID(rid);
+	
+	public static boolean testWhere(String whereClause){
+	        String query = whereClause;
+	        query = query.replaceAll("and", "&&").replaceAll("or", "||");
+	        try {
+	            String res = scriptEngine.eval(query) + "";
+	            return res.equals("true");
+	        } catch (ScriptException ex) {
+	        	
+	        }
+	        return true;
 	}
 
 }

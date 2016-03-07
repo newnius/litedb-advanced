@@ -6,7 +6,8 @@ public class Main {
 	public static final String TAG = "TRANSACTION";
 
 	public static boolean init() {
-		LockManager.init(10, 20);
+		LockManager.init(30, 20, 20);
+		LogManager.init();
 		return true;
 	}
 

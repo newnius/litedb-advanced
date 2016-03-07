@@ -2,7 +2,6 @@ package com.litedbAdvanced;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import com.litedbAdvanced.global.Config;
 import com.litedbAdvanced.transaction.LockManager;
 import com.litedbAdvanced.util.LiteLogger;
 
@@ -11,7 +10,6 @@ public class Main {
 
 	public static void main(String[] args) {
 		init();
-
 		String command;
 		while ((command = readCommand()) != null) {
 			executeCommand(command);
@@ -35,12 +33,10 @@ public class Main {
 		// com.litedbAdvanced.storage.Main.init();
 		com.litedbAdvanced.netio.Main.init();
 		com.litedbAdvanced.transaction.Main.init();
-		Config.setDBPrepared(true);
 		LiteLogger.info(TAG, "Database started.");
 	}
 	
 	private static void close(){
-		Config.setDBPrepared(false);
 		/* close each module*/
 		com.litedbAdvanced.netio.Main.close();
 		com.litedbAdvanced.transaction.Main.close();

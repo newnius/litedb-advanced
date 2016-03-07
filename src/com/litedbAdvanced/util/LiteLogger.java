@@ -5,7 +5,7 @@ import java.util.Set;
 
 public class LiteLogger {
 	private static Set<String> tags = new HashSet<>();
-	public static void info(String tag, String str){
+	public static void  info(String tag, String str){
 		if(tags.contains(tag)){
 			System.out.println(tag + ": " + str);
 		}

@@ -21,13 +21,31 @@ public class LogManager {
 
 	public static void write(int transactionId, int sqlId) {
 		String log = "(Tid=" + transactionId + ", Sid=" + sqlId + ")";
-		logs.add(log);
+		logs.add(0, log);
 		LiteLogger.info(Main.TAG, "write log " + log);
+		return;
 	}
 
-	public static void read(int transactionId, int sqlId) {
-		String log = "(Tid=" + transactionId + ", Sid=" + sqlId + ")";
-		LiteLogger.info(Main.TAG, "read log " + log);
+	public static String read(int transactionId, int sqlId) {
+		String log = null;
+		if (!logs.isEmpty()) {
+			log = logs.remove(logs.size() - 1);
+			LiteLogger.info(Main.TAG, "do log " + log);
+		}
+		return log;
+	}
+
+	public static String pop(int transactionId, int sqlId) {
+		String log = null;
+		if (!logs.isEmpty()) {
+			log = logs.remove(0);
+			LiteLogger.info(Main.TAG, "undo log " + log);
+		}
+		return log;
+	}
+	
+	public static void clear(){
+		logs.clear();
 	}
 
 }
