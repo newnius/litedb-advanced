@@ -37,14 +37,14 @@ class NetSlave extends Thread{
                 if(query.toLowerCase().equals("quit;")){
                     break;
                 } else {
-                    executor.execute(query.replace(";", ""));
-                    out.println("ok");
+                    out.println(executor.execute(query.replace(";", "")));
                 }
             }
             out.println(new Gson().toJson(new Message(Message.CONNECTION_CLOSED, "")));
             socket.close();
-        } catch (Exception e) {
+        } catch (Exception ex) {
         	LiteLogger.info(TAG, socket.getInetAddress().getHostAddress() + ":" + socket.getPort() + " disconnected.");
+        	LiteLogger.error(Main.TAG, ex);
         }
     }
     

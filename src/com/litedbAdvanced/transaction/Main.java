@@ -1,3 +1,9 @@
+/*
+ * @author Newnius
+ * provide services related to transaction, manage transaction log, lock etc.
+ * 
+ * */
+
 package com.litedbAdvanced.transaction;
 
 public class Main {

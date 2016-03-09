@@ -5,66 +5,79 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.litedbAdvanced.parser.DeleteStatement;
-import com.litedbAdvanced.parser.InsertStatement;
-import com.litedbAdvanced.parser.SelectStatement;
-import com.litedbAdvanced.parser.UpdateStatement;
 import com.litedbAdvanced.util.LiteLogger;
+import com.litedbAdvanced.util.Row;
 
 public class Transaction {
 	private int transactionId;
 	private int sqlId = 0;
 	private List<Long> XLockedRIDs;
+	private List<Long> SLockedRIDs;
 	private Map<String, Integer> savedPoints;
 
 	public Transaction() {
 		this.transactionId = Main.newTransactionId();
 		this.XLockedRIDs = new ArrayList<>();
+		this.SLockedRIDs = new ArrayList<>();
 		this.savedPoints = new HashMap<>();
 		LiteLogger.info(Main.TAG, "Transaction " + this.transactionId + " start.");
 	}
 
-	public void read(long rid) {
-		List<Long> SLockedRIDs = new ArrayList<>();
+	/*
+	 * read data, add SLock
+	 * 
+	 * */
+	public Row read(long rid) {
 		LockManager.SLockRID(rid);
 		SLockedRIDs.add(rid);
 		LiteLogger.info(Main.TAG, "read " + rid);
-		select(null);
+		return com.litedbAdvanced.storage.Main.getRow(rid);
+	}
+	
+	/* stop read, unlock all SLock*/
+	public void stopRead(){
 		for (Long RID : SLockedRIDs) {
 			LockManager.unSLockRID(RID);
 		}
 	}
+	
+	/*
+	 * read and add XLock
+	 * */
+	public Row readForUpdate(long rid){
+		if (!XLockedRIDs.contains(rid)) {
+			LockManager.XLockRID(rid);
+			XLockedRIDs.add(rid);
+		}
+		return com.litedbAdvanced.storage.Main.getRow(rid);
+	}
+	
+	/*
+	 * unlock rid won't be updated
+	 * */
+	public void unlockRID(long rid){
+		if (!XLockedRIDs.contains(rid)) {
+			LockManager.unXLockRID(rid);
+			XLockedRIDs.remove(rid);
+		}
+	}
 
+	/*
+	 * update or insert or delete record
+	 * */
 	public void write(long rid) {
 		if (!XLockedRIDs.contains(rid)) {
 			LockManager.XLockRID(rid);
 			XLockedRIDs.add(rid);
 		}
-		update(null);
+		sqlId++;
+		LogManager.write(transactionId, sqlId);
 		LiteLogger.info(Main.TAG, "write " + rid);
 		
 	}
 
 	public int getTransactionId() {
 		return this.transactionId;
-	}
-
-	public void select(SelectStatement stat) {
-	}
-
-	public void insert(InsertStatement stat) {
-		sqlId++;
-		LogManager.write(transactionId, sqlId);
-	}
-
-	public void update(UpdateStatement stat) {
-		sqlId++;
-		LogManager.write(transactionId, sqlId);
-	}
-
-	public void delete(DeleteStatement stat) {
-		sqlId++;
-		LogManager.write(transactionId, sqlId);
 	}
 
 	public void rollback(String pointName) {

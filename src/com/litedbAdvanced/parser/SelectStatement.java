@@ -1,32 +1,48 @@
 package com.litedbAdvanced.parser;
 
-import java.util.ArrayList;
-import java.util.List;
 
 public class SelectStatement {
+	private String tableName ;
+	private String[] keys;
+	private String whereClause = "1";
+	private String orderBy = null;
+	private int offset = 0;
+	private int count = -1;
 	
-	public int getTableId(){
-		return 0;
+	
+	public SelectStatement(String tableName, String[] keys, String whereClause, String orderBy, int offset,
+			int count) {
+		super();
+		this.tableName = tableName;
+		this.keys = keys;
+		this.whereClause = whereClause;
+		this.orderBy = orderBy;
+		this.offset = offset;
+		this.count = count;
+	}
+
+	public String getTableName(){
+		return tableName;
 	}
 	
-	public List<String> getSelectedKeys(){
-		return new ArrayList<>();
+	public String[] getSelectedKeys(){
+		return keys;
 	}
 	
 	public String getOrderBy(){
-		return "id";
+		return orderBy;
 	}
 	
 	public String getWhere(){
-		return "1";
+		return whereClause;
 	}
 	
 	public int getOffset(){
-		return 0;
+		return offset;
 	}
 	
 	public int getCount(){
-		return -1;
+		return count;
 	}
 	
 	

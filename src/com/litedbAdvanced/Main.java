@@ -22,9 +22,10 @@ public class Main {
 		 * */
 		//LiteLogger.addTag("LOGGER");
 		LiteLogger.addTag("MAIN");
-		//LiteLogger.addTag("SOCKET");
+		LiteLogger.addTag("SOCKET");
 		LiteLogger.addTag("TRANSACTION");
 		LiteLogger.addTag("EXECUTOR");
+		LiteLogger.addTag("STORAGE");
 		
 		LiteLogger.info("MAIN", "Database starting...");
 		
@@ -32,6 +33,7 @@ public class Main {
 		// com.litedbAdvanced.memory.Main.init();
 		// com.litedbAdvanced.storage.Main.init();
 		com.litedbAdvanced.netio.Main.init();
+		com.litedbAdvanced.storage.Main.init();
 		com.litedbAdvanced.transaction.Main.init();
 		LiteLogger.info(TAG, "Database started.");
 	}
@@ -39,6 +41,7 @@ public class Main {
 	private static void close(){
 		/* close each module*/
 		com.litedbAdvanced.netio.Main.close();
+		com.litedbAdvanced.storage.Main.close();
 		com.litedbAdvanced.transaction.Main.close();
 		LiteLogger.info(TAG, "Database closed.");
 	}
@@ -78,7 +81,8 @@ public class Main {
 			case "unXLock":
 				unXLock(params);
 				break;
-			case "begin":
+			case "testWhere":
+				testWhere(params);
 				break;
 			case "commit":
 				break;
@@ -137,6 +141,14 @@ public class Main {
 		}
 		int rid = Integer.parseInt(args[1]);
 		LockManager.unXLockRID(rid);
+	}
+	
+	public static void testWhere(String[] args){
+		if(args.length < 2){
+			LiteLogger.info(TAG, "whereClause not specified.");
+			return;
+		}
+		LiteLogger.info(Main.TAG, com.litedbAdvanced.execute.Main.testWhere(args[1])?"true":"false");
 	}
 
 }
