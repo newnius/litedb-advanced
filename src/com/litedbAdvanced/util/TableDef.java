@@ -2,7 +2,11 @@ package com.litedbAdvanced.util;
 
 import java.util.List;
 
-public class TableDef {
+public class TableDef implements java.io.Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private String tableName;
 	private String primaryKey;
 	

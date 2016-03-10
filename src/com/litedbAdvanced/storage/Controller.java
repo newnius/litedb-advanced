@@ -10,15 +10,21 @@ import com.litedbAdvanced.util.LiteLogger;
 import com.litedbAdvanced.util.Row;
 import com.litedbAdvanced.util.TableDef;
 
-public class Controller {
+class Controller {
 	private static Map<String, Integer> fileIds;
-	private static Map<String, TableDef> tableDefs;
+	private static Map<Integer, TableDef> tableDefs;
+	private static int nextFileId = 1;
 
 	// 缓存池
 	private static LRUCache<Integer, Block> lru;
 
 	public static int getFileId(long RID) {
 		int fileId = (int) (RID / 1000000);
+		return fileId;
+	}
+
+	public static int getFileId(int blockId) {
+		int fileId = (int) (blockId / 1000);
 		return fileId;
 	}
 
@@ -34,6 +40,11 @@ public class Controller {
 
 	public static int getBlockOffset(long RID) {
 		int rowOffset = (int) ((RID / 1000) % 1000) - 1;
+		return rowOffset;
+	}
+
+	public static int getBlockOffset(int blockId) {
+		int rowOffset = (int) (blockId % 1000) - 1;
 		return rowOffset;
 	}
 
@@ -60,30 +71,64 @@ public class Controller {
 		LiteLogger.info(Main.TAG, "缓存池初始化");
 
 		fileIds = new HashMap<>();
-		tableDefs = new HashMap<>();
+		tableDefs = FileManager.getTableDefs();
+		Map<Integer, String> fileNames = FileManager.getFileNames();
+		Set<Integer> ids = fileNames.keySet();
+		for (int fileId : ids) {
+			fileIds.put(fileNames.get(fileId), fileId);
+		}
+
+		LiteLogger.info(Main.TAG, "load " + fileIds.size() + " fileId");
+		LiteLogger.info(Main.TAG, "load " + tableDefs.size() + " table def");
+		Set<Integer> ids2 = tableDefs.keySet();
+		for(int id:ids2){
+			LiteLogger.info(Main.TAG, tableDefs.get(id).getPrimaryKey());
+		}
 	}
 
 	public static boolean createTable(TableDef tableDef) {
+		String fileName = tableDef.getTableName() + ".dat";
 
+		if (fileIds.containsKey(fileName))
+			return false;
+
+		int fileId = nextFileId++;
+
+		/* create data file */
+		FileManager.createFile(fileId, fileName);
+		fileIds.put(fileName, fileId);
+		tableDefs.put(fileId, tableDef);
+
+		/* create index files */
+		List<String> indexs = tableDef.getIndexs();
+		for (String index : indexs) {
+			fileId = nextFileId++;
+			fileName = tableDef.getTableName() + "." + index + ".idx";
+			fileIds.put(fileName, fileId);
+			FileManager.createFile(fileId, fileName);
+		}
 		return true;
 	}
 
 	public static boolean deleteTable(String tableName) {
 		int fileId = fileIds.get(tableName);
-		return deleteTable(fileId);
-	}
+		TableDef tableDef = tableDefs.get(fileId);
+		String fileName = tableDef.getTableName() + ".dat";
 
-	// 删除表相关所属的所有文件
-	public static boolean deleteTable(int tableId) {
-		TableDef tableDef = tableDefs.get(tableId);
-		String tableName = tableDef.getTableName();
+		/* delete data file */
+		FileManager.deleteFile(fileName);
+		fileIds.remove(fileId);
+		tableDefs.remove(fileId);
+
+		/* create index files */
 		List<String> indexs = tableDef.getIndexs();
-		FileManager.deleteFile(tableName + ".dat");
-
 		for (String index : indexs) {
-			FileManager.deleteFile(tableName + "." + index + ".dat"); // delete
+			fileName = tableDef.getTableName() + "." + index + ".idx";
+			fileId = fileIds.get(fileName);
+			fileIds.remove(fileId);
+			tableDefs.remove(fileId);
+			FileManager.deleteFile(fileName);
 		}
-		FileManager.deleteFile(tableName + ".def");
 		return true;
 	}
 
@@ -117,7 +162,7 @@ public class Controller {
 	}
 
 	// 删除行数据
-	public static boolean deteteRow(long RID) {
+	public static boolean deleteRow(long RID) {
 		int blockId = Controller.getBlockId(RID);
 		Block block = null;
 		if (lru.get(blockId) == null) {

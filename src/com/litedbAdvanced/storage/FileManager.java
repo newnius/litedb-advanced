@@ -8,35 +8,57 @@ import java.util.Set;
 
 import com.litedbAdvanced.util.Config;
 import com.litedbAdvanced.util.LiteLogger;
+import com.litedbAdvanced.util.Serialization;
+import com.litedbAdvanced.util.TableDef;
 
 public class FileManager {
 	private static Map<Integer, RandomAccessFile> files;
+	private static Map<Integer, String> fileNames;
+	private static Map<Integer, TableDef> tableDefs;
 
+	@SuppressWarnings("unchecked")
 	public static boolean init() {
 		try {
 
 			files = new HashMap<>();
 
-			// load system file, including all tableName
-			File systemFile = new File("litedb.sys");
-			Map<Integer, String> tables = new HashMap<>();
-			// read system file to get fileId and filename map
+			// load system file, including all tableName, including index files
+			// name
+			File systemFile = new File(Config.DATA_DICTORY + "/litedb.sys");
 
 			if (systemFile.exists()) {
+				RandomAccessFile rf = new RandomAccessFile(systemFile, "rw");
+				// read system file to get fileId and filename map
+				byte[] tem = new byte[Config.FILE_SIZE];
+				byte[] byteLength = new byte[4];
+				rf.read(byteLength, 0, 4);
+				int length = Serialization.byteArrayToInt(byteLength);
+				rf.read(tem, 0, length);
+				rf.close();
+
+				fileNames = (Map<Integer, String>) Serialization.ByteToObject(tem);
+
 				// load all table files
-				Set<Integer> fileIds = tables.keySet();
+				Set<Integer> fileIds = fileNames.keySet();
 				for (int fileId : fileIds) {
-					String fileName = tables.get(fileId);
-					RandomAccessFile file = new RandomAccessFile(fileName + ".dat", "rw");
+					String fileName = fileNames.get(fileId);
+					RandomAccessFile file = new RandomAccessFile(Config.DATA_DICTORY + "/" + fileName, "rw");
 					files.put(fileId, file);
 				}
 
 			} else {
-				RandomAccessFile newSystemFile = new RandomAccessFile("litedb.sys", "rw");
+				RandomAccessFile newSystemFile = new RandomAccessFile(Config.DATA_DICTORY + "/litedb.sys", "rw");
 				newSystemFile.setLength(Config.FILE_SIZE);
+				byte[] dataBytes = Serialization.ObjectToByte(new HashMap<Integer, String>());
+				byte[] bytes = Serialization.intToByteArray(dataBytes.length);
+				newSystemFile.write(bytes, 0, 4);
+				newSystemFile.write(dataBytes, 0, dataBytes.length);
 				newSystemFile.close();
+				files = new HashMap<>();
+				fileNames = new HashMap<>();
 			}
-			LiteLogger.info(Main.TAG, "文件控制器初始化");
+			loadTableDefs();
+			LiteLogger.info(Main.TAG, "文件控制器初始化完毕,共加载" + files.size() + "文件");
 			return true;
 		} catch (Exception ex) {
 			LiteLogger.error(Main.TAG, ex);
@@ -47,12 +69,31 @@ public class FileManager {
 
 	public static boolean close() {
 		try {
+			/* update system file */
+			RandomAccessFile newSystemFile = new RandomAccessFile(Config.DATA_DICTORY + "/litedb.sys", "rw");
+			byte[] dataBytes = Serialization.ObjectToByte(fileNames);
+			byte[] bytes = Serialization.intToByteArray(dataBytes.length);
+			newSystemFile.write(bytes, 0, 4);
+			newSystemFile.write(dataBytes, 0, dataBytes.length);
+			newSystemFile.close();
+
 			Set<Integer> fileIds = files.keySet();
 			for (int fileId : fileIds) {
 				RandomAccessFile rf = files.get(fileId);
 				rf.close();
 			}
 			files.clear();
+			
+			/*update definition file*/
+			/* update system file */
+			RandomAccessFile defFile = new RandomAccessFile(Config.DATA_DICTORY + "/def.sys", "rw");
+			byte[] dataBytes2 = Serialization.ObjectToByte(tableDefs);
+			byte[] bytes2 = Serialization.intToByteArray(dataBytes2.length);
+			defFile.write(bytes2, 0, 4);
+			defFile.write(dataBytes2, 0, dataBytes2.length);
+			defFile.close();
+			tableDefs.clear();
+			
 			LiteLogger.info(Main.TAG, "文件控制器关闭");
 			return true;
 		} catch (Exception ex) {
@@ -61,10 +102,42 @@ public class FileManager {
 		}
 	}
 
-	public static Block loadBlock(long RID) {
+	@SuppressWarnings("unchecked")
+	private static void loadTableDefs() {
 		try {
-			int fileId = Controller.getFileId(RID);
-			int blockOffset = Controller.getBlockOffset(RID);
+			File defFile = new File(Config.DATA_DICTORY + "/def.sys");
+
+			if (defFile.exists()) {
+				RandomAccessFile rf = new RandomAccessFile(defFile, "rw");
+				// read definition file to get fileId and tableDef map
+				byte[] tem = new byte[Config.FILE_SIZE];
+				byte[] byteLength = new byte[4];
+				rf.read(byteLength, 0, 4);
+				int length = Serialization.byteArrayToInt(byteLength);
+				rf.read(tem, 0, length);
+				rf.close();
+				tableDefs = (Map<Integer, TableDef>) Serialization.ByteToObject(tem);
+			} else {
+				RandomAccessFile newDefFile = new RandomAccessFile(Config.DATA_DICTORY + "/def.sys", "rw");
+				newDefFile.setLength(Config.FILE_SIZE);
+				byte[] dataBytes = Serialization.ObjectToByte(new HashMap<Integer, TableDef>());
+				byte[] bytes = Serialization.intToByteArray(dataBytes.length);
+				newDefFile.write(bytes, 0, 4);
+				newDefFile.write(dataBytes, 0, dataBytes.length);
+				newDefFile.close();
+				tableDefs = new HashMap<>();
+			}
+		} catch (Exception ex) {
+			LiteLogger.error(Main.TAG, ex);
+		}
+	}
+	
+	
+
+	public static Block loadBlock(int blockId) {
+		try {
+			int fileId = Controller.getFileId(blockId);
+			int blockOffset = Controller.getBlockOffset(blockId);
 
 			RandomAccessFile rf = files.get(fileId);
 			if (rf == null)
@@ -82,10 +155,10 @@ public class FileManager {
 		}
 	}
 
-	public static boolean updateBlock(long RID, Block block) {
+	public static boolean updateBlock(int blockId, Block block) {
 		try {
-			int fileId = Controller.getFileId(RID);
-			int blockOffset = Controller.getBlockOffset(RID);
+			int fileId = Controller.getFileId(blockId);
+			int blockOffset = Controller.getBlockOffset(blockId);
 
 			RandomAccessFile rf = files.get(fileId);
 			if (rf == null)
@@ -102,18 +175,31 @@ public class FileManager {
 	}
 
 	public static boolean createFile(int fileId, String fileName) {
-		return true;
+		try {
+
+			RandomAccessFile rf = new RandomAccessFile(Config.DATA_DICTORY + "/" + fileName, "rw");
+			rf.setLength(Config.FILE_SIZE);
+
+			files.put(fileId, rf);
+			fileNames.put(fileId, fileName);
+			return true;
+		} catch (Exception ex) {
+			LiteLogger.error(Main.TAG, ex);
+			return false;
+		}
 	}
 
 	public static boolean deleteFile(String fileName) {
 		try {
-			File file = new File(fileName);
+			File file = new File(Config.DATA_DICTORY + "/" + fileName);
 			int fileId = Controller.getFileId(fileName);
 			RandomAccessFile rf = files.get(fileId);
 			if (rf != null) {
 				rf.close();
 				files.remove(fileId);
 			}
+			fileNames.remove(fileId);
+
 			if (file.exists())
 				file.delete();
 			return true;
@@ -122,5 +208,15 @@ public class FileManager {
 			return false;
 		}
 	}
+
+	public static Map<Integer, String> getFileNames() {
+		return fileNames;
+	}
+
+	public static Map<Integer, TableDef> getTableDefs() {
+		return tableDefs;
+	}
+	
+	
 
 }

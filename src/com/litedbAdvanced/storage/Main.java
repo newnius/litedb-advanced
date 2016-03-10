@@ -1,5 +1,8 @@
 package com.litedbAdvanced.storage;
 
+
+import java.util.ArrayList;
+
 import com.litedbAdvanced.util.LiteLogger;
 import com.litedbAdvanced.util.Row;
 import com.litedbAdvanced.util.TableDef;
@@ -11,10 +14,16 @@ public class Main {
 		com.litedbAdvanced.storage.FileManager.init();
 		com.litedbAdvanced.storage.Controller.init();
 		LiteLogger.info(TAG, "started.");
+		
+		TableDef tableDef = new TableDef("test", "id", null, null, null, new ArrayList<String>());
+		createTable(tableDef);
+		
 		return true;
 	}
 
 	public static boolean close() {
+		com.litedbAdvanced.storage.Controller.close();
+		com.litedbAdvanced.storage.FileManager.close();
 		LiteLogger.info(TAG, "closed.");
 		return true;
 	}
@@ -33,7 +42,7 @@ public class Main {
 	}
 
 	public static boolean deleteRow(int RID) {
-		return Controller.deleteTable(RID);
+		return Controller.deleteRow(RID);
 	}
 
 	public static boolean updateROw(int RID, Row newrow) {
