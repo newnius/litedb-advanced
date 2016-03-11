@@ -83,8 +83,8 @@ public class FileManager {
 				rf.close();
 			}
 			files.clear();
-			
-			/*update definition file*/
+
+			/* update definition file */
 			/* update system file */
 			RandomAccessFile defFile = new RandomAccessFile(Config.DATA_DICTORY + "/def.sys", "rw");
 			byte[] dataBytes2 = Serialization.ObjectToByte(tableDefs);
@@ -93,7 +93,7 @@ public class FileManager {
 			defFile.write(dataBytes2, 0, dataBytes2.length);
 			defFile.close();
 			tableDefs.clear();
-			
+
 			LiteLogger.info(Main.TAG, "文件控制器关闭");
 			return true;
 		} catch (Exception ex) {
@@ -131,8 +131,6 @@ public class FileManager {
 			LiteLogger.error(Main.TAG, ex);
 		}
 	}
-	
-	
 
 	public static Block loadBlock(int blockId) {
 		try {
@@ -146,8 +144,8 @@ public class FileManager {
 			byte[] bytes = new byte[Config.BLOCK_SIZE];
 			rf.seek(blockOffset * Config.BLOCK_SIZE);
 			rf.read(bytes, 0, Config.BLOCK_SIZE);
-			Block block = new Block(bytes);
-
+			Block block = new Block(blockId, bytes);
+			LiteLogger.info(Main.TAG, "load block " + blockId);
 			return block;
 		} catch (Exception ex) {
 			LiteLogger.error(Main.TAG, ex);
@@ -164,9 +162,10 @@ public class FileManager {
 			if (rf == null)
 				return false;
 
-			byte[] bytes = new byte[Config.BLOCK_SIZE];
+			byte[] bytes = block.data;
 			rf.seek(blockOffset * Config.BLOCK_SIZE);
 			rf.write(bytes, 0, Config.BLOCK_SIZE);
+			LiteLogger.info(Main.TAG, "update block " + blockId);
 			return true;
 		} catch (Exception ex) {
 			LiteLogger.error(Main.TAG, ex);
@@ -180,8 +179,12 @@ public class FileManager {
 			RandomAccessFile rf = new RandomAccessFile(Config.DATA_DICTORY + "/" + fileName, "rw");
 			rf.setLength(Config.FILE_SIZE);
 
+			for (int i = 0; i < Config.BLOCK_SIZE; i++)
+				rf.write(0);
+
 			files.put(fileId, rf);
 			fileNames.put(fileId, fileName);
+			LiteLogger.info(Main.TAG, "create file " + fileName);
 			return true;
 		} catch (Exception ex) {
 			LiteLogger.error(Main.TAG, ex);
@@ -202,6 +205,7 @@ public class FileManager {
 
 			if (file.exists())
 				file.delete();
+			LiteLogger.info(Main.TAG, "delete file " + fileName);
 			return true;
 		} catch (Exception ex) {
 			LiteLogger.error(Main.TAG, ex);
@@ -216,7 +220,5 @@ public class FileManager {
 	public static Map<Integer, TableDef> getTableDefs() {
 		return tableDefs;
 	}
-	
-	
 
 }

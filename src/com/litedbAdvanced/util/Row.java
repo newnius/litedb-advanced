@@ -6,7 +6,9 @@ public class Row {
 	private TableDef table;
 	private List<String> values;
 
-	public Row(byte[] values) {
+	public Row(TableDef table, List<String> values) {
+		this.table = table;
+		this.values = values;
 	}
 
 	public Row(TableDef table, byte[] bytes) {
@@ -15,11 +17,7 @@ public class Row {
 	}
 
 	public byte[] toByteArray() {
-		return table.toByteArray(this);
-	}
-
-	public long getRID() {
-		return 0;
+		return table.toByteArray(values);
 	}
 
 	public int getInt(int index) {
@@ -38,9 +36,7 @@ public class Row {
 		return null;
 	}
 
-	public Object get(String key) {
-		return null;
-	}
+
 
 	@Override
 	public String toString() {
@@ -59,5 +55,7 @@ public class Row {
 		values.set(index, value);
 		return true;
 	}
+	
+	
 
 }

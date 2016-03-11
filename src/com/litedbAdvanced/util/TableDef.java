@@ -1,20 +1,23 @@
 package com.litedbAdvanced.util;
 
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class TableDef implements java.io.Serializable{
+
+public class TableDef implements java.io.Serializable {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 	private String tableName;
 	private String primaryKey;
-	
-	
+
 	private List<String> keyNames;
 	private List<Integer> types;
 	private List<Integer> lengths;
-	
+
 	public static final int TYPE_INT = 0;
 	public static final int TYPE_DOUBLE = 1;
 	public static final int TYPE_CHAR = 2;
@@ -24,8 +27,8 @@ public class TableDef implements java.io.Serializable{
 
 	private int rowSize = 0;
 
-	public TableDef(String tableName, String primaryKey, List<String> keyNames, List<Integer> types, List<Integer> lengths,
-			List<String> indexs) {
+	public TableDef(String tableName, String primaryKey, List<String> keyNames, List<Integer> types,
+			List<Integer> lengths, List<String> indexs) {
 		super();
 		this.tableName = tableName;
 		this.primaryKey = primaryKey;
@@ -35,18 +38,13 @@ public class TableDef implements java.io.Serializable{
 		this.indexs = indexs;
 	}
 
-	
 	public String getTableName() {
 		return tableName;
 	}
-	
-	
-	
 
 	public List<String> getKeyNames() {
 		return keyNames;
 	}
-
 
 	public int getRowSize() {
 		if (this.rowSize != 0)
@@ -81,65 +79,77 @@ public class TableDef implements java.io.Serializable{
 	public List<Integer> getLengths() {
 		return lengths;
 	}
-	
-	public List<String> getIndexs(){
+
+	public List<String> getIndexs() {
 		return indexs;
 	}
-	
-	public String getPrimaryKey(){
+
+	public String getPrimaryKey() {
 		return primaryKey;
 	}
-	
-	public byte[] toByteArray(Row row){
-		
+
+	public byte[] toByteArray(List<String> values) {
+		byte[] record = new byte[getRowSize()];
+		ByteBuffer byteBuffer = ByteBuffer.wrap(record);
+
 		for (int i = 0; i < types.size(); i++) {
 			int type = types.get(i);
 			int length = lengths.get(i);
+			String value = values.get(i);
 			switch (type) {
 			case TableDef.TYPE_INT:
-				rowSize += 4;
+				byteBuffer.putInt(Integer.parseInt(value));
 				break;
 			case TableDef.TYPE_DOUBLE:
-				rowSize += 8;
+				byteBuffer.putDouble(Double.parseDouble(value));
 				break;
 			case TableDef.TYPE_CHAR:
-				rowSize += length;
+				byte[] tmp = new byte[length];
+				ByteBuffer tmpByteBuffer = ByteBuffer.wrap(tmp);
+				tmpByteBuffer.put(value.getBytes());
+				byteBuffer.put(tmpByteBuffer.array());
 				break;
 			case TableDef.TYPE_VARCHAR:
-				rowSize += 8;
 				break;
 			}
 		}
-		
-		
-		
-		return null;
+
+		return byteBuffer.array();
 	}
-	
-public List<String> toStringList(byte[] bytes){
-		
+
+	public List<String> toStringList(byte[] bytes) {
+		List<String> values = new ArrayList<>();
+		int offset = 0;
+		ByteBuffer.wrap(Arrays.copyOfRange(bytes, offset, 4)).getInt();
+
 		for (int i = 0; i < types.size(); i++) {
-			int type = types.get(i);
 			int length = lengths.get(i);
+			int type = types.get(i);
 			switch (type) {
 			case TableDef.TYPE_INT:
-				rowSize += 4;
+				int intvalue = ByteBuffer.wrap(Arrays.copyOfRange(bytes, offset, offset + 4)).getInt();
+				values.add(intvalue + "");
+				offset += 4;
 				break;
 			case TableDef.TYPE_DOUBLE:
-				rowSize += 8;
+				double doublevalue = ByteBuffer.wrap(Arrays.copyOfRange(bytes, offset, offset + 8)).getDouble();
+				values.add(doublevalue + "");
+				offset += 8;
 				break;
 			case TableDef.TYPE_CHAR:
-				rowSize += length;
+				byte[] chars = ByteBuffer.wrap(Arrays.copyOfRange(bytes, offset, offset + length)).array();
+				values.add(new String(chars));
+				offset += length;
 				break;
 			case TableDef.TYPE_VARCHAR:
-				rowSize += 8;
+				double longvalue = ByteBuffer.wrap(Arrays.copyOfRange(bytes, offset, offset + 8)).getDouble();
+				values.add(longvalue + "");
+				offset += 8;
 				break;
 			}
 		}
-		
-		
-		
-		return null;
+
+		return values;
 	}
-	
+
 }

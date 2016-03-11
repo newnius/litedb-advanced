@@ -1,7 +1,7 @@
 package com.litedbAdvanced.storage;
 
-
 import java.util.ArrayList;
+import java.util.List;
 
 import com.litedbAdvanced.util.LiteLogger;
 import com.litedbAdvanced.util.Row;
@@ -14,10 +14,39 @@ public class Main {
 		com.litedbAdvanced.storage.FileManager.init();
 		com.litedbAdvanced.storage.Controller.init();
 		LiteLogger.info(TAG, "started.");
-		
-		TableDef tableDef = new TableDef("test", "id", null, null, null, new ArrayList<String>());
-		createTable(tableDef);
-		
+
+		List<String> keyNames = new ArrayList<>();
+		keyNames.add("id");
+		keyNames.add("name");
+		keyNames.add("age");
+		List<Integer> types = new ArrayList<>();
+		types.add(TableDef.TYPE_INT);
+		types.add(TableDef.TYPE_CHAR);
+		types.add(TableDef.TYPE_INT);
+		List<Integer> lengths = new ArrayList<>();
+		lengths.add(11);
+		lengths.add(10);
+		lengths.add(11);
+
+		//TableDef tableDef = new TableDef("test", "id", keyNames, types, lengths, new ArrayList<String>());
+		//createTable(tableDef);
+
+		List<String> values = new ArrayList<>();
+		values.add("1");
+		values.add("newnius");
+		values.add("20");
+
+		//Row row = new Row(tableDef, values);
+
+		// Controller.deleteRow(1001001);
+/*		for (int i = 0; i < 20; i++) {
+			long RID = nextRID(tableDef.getTableName() + ".dat");
+			Controller.insertRow(RID, row);
+		}*/
+		//
+		// ow newrow = getRow(1001001);
+		// LiteLogger.info(Main.TAG, newrow.get(1));
+
 		return true;
 	}
 
@@ -37,15 +66,15 @@ public class Main {
 		return Controller.getRow(RID);
 	}
 
-	public static boolean insertRow(int RID, Row newrow) {
+	public static boolean insertRow(long RID, Row newrow) {
 		return Controller.insertRow(RID, newrow);
 	}
 
-	public static boolean deleteRow(int RID) {
+	public static boolean deleteRow(long RID) {
 		return Controller.deleteRow(RID);
 	}
 
-	public static boolean updateROw(int RID, Row newrow) {
+	public static boolean updateROw(long RID, Row newrow) {
 		return Controller.updateRow(RID, newrow);
 	}
 

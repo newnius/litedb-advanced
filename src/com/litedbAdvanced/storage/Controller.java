@@ -14,6 +14,24 @@ class Controller {
 	private static Map<String, Integer> fileIds;
 	private static Map<Integer, TableDef> tableDefs;
 	private static int nextFileId = 1;
+	private static Map<Integer, byte[]> isBlockNeverUsedBitMap;
+
+	public static boolean isBlockNeverUsed(int blockId) {
+		int fileId = getFileId(blockId);
+		if (isBlockNeverUsedBitMap.get(fileId) == null)
+			return false;
+		int blockOffset = getBlockOffset(blockId);
+		return isBlockNeverUsedBitMap.get(fileId)[blockOffset - 1] == 0;
+	}
+
+	public static boolean useBlock(int blockId) {
+		int fileId = getFileId(blockId);
+		if (isBlockNeverUsedBitMap.get(fileId) == null)
+			return false;
+		int blockOffset = getBlockOffset(blockId);
+		isBlockNeverUsedBitMap.get(fileId)[blockOffset - 1] = 0;
+		return true;
+	}
 
 	// 缓存池
 	private static LRUCache<Integer, Block> lru;
@@ -34,17 +52,17 @@ class Controller {
 	}
 
 	public static int getRowOffset(long RID) {
-		int rowOffset = (int) (RID % 1000) - 1;
+		int rowOffset = (int) (RID % 1000);
 		return rowOffset;
 	}
 
 	public static int getBlockOffset(long RID) {
-		int rowOffset = (int) ((RID / 1000) % 1000) - 1;
+		int rowOffset = (int) ((RID / 1000) % 1000);
 		return rowOffset;
 	}
 
 	public static int getBlockOffset(int blockId) {
-		int rowOffset = (int) (blockId % 1000) - 1;
+		int rowOffset = (int) (blockId % 1000);
 		return rowOffset;
 	}
 
@@ -76,21 +94,31 @@ class Controller {
 		Set<Integer> ids = fileNames.keySet();
 		for (int fileId : ids) {
 			fileIds.put(fileNames.get(fileId), fileId);
+			if (fileId >= nextFileId)
+				nextFileId = fileId + 1;
+		}
+
+		/* load first block of all file */
+		isBlockNeverUsedBitMap = new HashMap<>();
+		Set<Integer> ids2 = tableDefs.keySet();
+		for (int id : ids2) {
+			int blockId = id * 1000;
+			Block block = FileManager.loadBlock(blockId);
+			isBlockNeverUsedBitMap.put(id, block.data);
 		}
 
 		LiteLogger.info(Main.TAG, "load " + fileIds.size() + " fileId");
 		LiteLogger.info(Main.TAG, "load " + tableDefs.size() + " table def");
-		Set<Integer> ids2 = tableDefs.keySet();
-		for(int id:ids2){
-			LiteLogger.info(Main.TAG, tableDefs.get(id).getPrimaryKey());
-		}
+		LiteLogger.info(Main.TAG, "load " + isBlockNeverUsedBitMap.size() + " first block");
 	}
 
 	public static boolean createTable(TableDef tableDef) {
 		String fileName = tableDef.getTableName() + ".dat";
 
-		if (fileIds.containsKey(fileName))
+		if (fileIds.containsKey(fileName)){
+			LiteLogger.info(Main.TAG, "create table fail, already exist");
 			return false;
+		}
 
 		int fileId = nextFileId++;
 
@@ -154,8 +182,10 @@ class Controller {
 		if (lru.get(blockId) == null) {
 			block = FileManager.loadBlock(blockId);
 			lru.put(blockId, block);
+			LiteLogger.info(Main.TAG, "缓存池中无此块，读取" + blockId + "号块");
 		} else {
 			block = ((Block) lru.get(blockId));
+			LiteLogger.info(Main.TAG, "缓存池中有此块，读取" + blockId + "号块");
 		}
 		block.updateRow(RID, row);
 		return true;
@@ -168,8 +198,10 @@ class Controller {
 		if (lru.get(blockId) == null) {
 			block = FileManager.loadBlock(blockId);
 			lru.put(blockId, block);
+			LiteLogger.info(Main.TAG, "缓存池中无此块，读取" + blockId + "号块");
 		} else {
 			block = ((Block) lru.get(blockId));
+			LiteLogger.info(Main.TAG, "缓存池中有此块，读取" + blockId + "号块");
 		}
 		block.deleteRow(RID);
 		return true;
@@ -182,33 +214,50 @@ class Controller {
 		if (lru.get(blockId) == null) {
 			block = FileManager.loadBlock(blockId);
 			lru.put(blockId, block);
+			LiteLogger.info(Main.TAG, "缓存池中无此块，读取" + blockId + "号块");
 		} else {
 			block = ((Block) lru.get(blockId));
+			LiteLogger.info(Main.TAG, "缓存池中有此块，读取" + blockId + "号块");
 		}
 		block.insertRow(RID, row);
 		return true;
 	}
 
-	public static Block getBlock(int blockId) {
+	private static Block getBlock(int blockId) {
 		if (lru.get(blockId) == null) {
 			Block block = FileManager.loadBlock(blockId);
 			lru.put(blockId, block);
+			LiteLogger.info(Main.TAG, "缓存池中无此块，读取" + blockId + "号块");
 		}
 		return lru.get(blockId);
 	}
 
-	public static long nextRID(String tableName) {
+	public synchronized static long nextRID(String tableName) {
 		int blockSum = Config.FILE_SIZE / Config.BLOCK_SIZE;
+		if (!fileIds.containsKey(tableName))
+			return 0;
 		int fileId = fileIds.get(tableName);
 		int blockIdStart = fileId * 1000;
 
 		for (int i = 0; i < blockSum; i++) {
-			int blockId = blockIdStart + i;
+			int blockId = blockIdStart + i + 1;
 			Block block = getBlock(blockId);
+			lru.put(blockId, block);
+
+			if (isBlockNeverUsed(blockId)) {
+				useBlock(blockId);
+				block.clear();
+			}
+
 			long RID = blockId * 1000;
-			int nextRowOffset = block.nextRowOffset(RID);
-			if (nextRowOffset != -1)
+			int nextRowOffset = block.nextRowOffset();
+			if (nextRowOffset != -1) {
+				LiteLogger.info(Main.TAG, "nextRID = " + RID + nextRowOffset);
 				return RID + nextRowOffset;
+			} else {
+				LiteLogger.info(Main.TAG, "no space available in block " + blockId);
+			}
+
 		}
 		return -1;
 	}
@@ -221,6 +270,12 @@ class Controller {
 			FileManager.updateBlock(blockId, block);
 		}
 		lru.clear();
+		Set<Integer> fileIds = isBlockNeverUsedBitMap.keySet();
+		for (int fileId : fileIds) {
+			int blockId = fileId * 1000;
+			FileManager.updateBlock(blockId, new Block(blockId, isBlockNeverUsedBitMap.get(fileId)));
+		}
+
 		LiteLogger.info(Main.TAG, "缓存池关闭");
 	}
 
