@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
 public class TableDef implements java.io.Serializable {
 	/**
 	 * 
@@ -150,6 +149,23 @@ public class TableDef implements java.io.Serializable {
 		}
 
 		return values;
+	}
+
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		String str = "table name: " + tableName + "\n" + "primary key: " + primaryKey + "\n";
+		str += "columns \n";
+		for (int i = 0; i < keyNames.size(); i++) {
+			str += "name:" + keyNames.get(i) + " type:" + types.get(i) + " type:" + lengths.get(i) + "\n";
+		}
+
+		str += "indexs \n";
+		for (int i = 0; i < indexs.size(); i++) {
+			str += "name:" + indexs.get(i) + "\n";
+		}
+
+		return str;
 	}
 
 }

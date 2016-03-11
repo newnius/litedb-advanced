@@ -52,20 +52,12 @@ public class Transaction {
 		return com.litedbAdvanced.storage.Main.getRow(rid);
 	}
 	
-	/*
-	 * unlock rid won't be updated
-	 * */
-	public void unlockRID(long rid){
-		if (!XLockedRIDs.contains(rid)) {
-			LockManager.unXLockRID(rid);
-			XLockedRIDs.remove(rid);
-		}
-	}
+	
 
-	/*
+	/* lock for
 	 * update or insert or delete record
 	 * */
-	public void write(long rid) {
+	private void XLockRID(long rid) {
 		if (!XLockedRIDs.contains(rid)) {
 			LockManager.XLockRID(rid);
 			XLockedRIDs.add(rid);
@@ -74,6 +66,11 @@ public class Transaction {
 		LogManager.write(transactionId, sqlId);
 		LiteLogger.info(Main.TAG, "write " + rid);
 		
+	}
+	
+	public int insert(long RID, Row row){
+		XLockRID(RID);
+		return com.litedbAdvanced.storage.Main.insertRow(RID, row);
 	}
 
 	public int getTransactionId() {

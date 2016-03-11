@@ -4,10 +4,18 @@ import java.util.List;
 
 public class Row {
 	private TableDef table;
+	private List<String> keys;
 	private List<String> values;
 
 	public Row(TableDef table, List<String> values) {
 		this.table = table;
+		this.keys = table.getKeyNames();
+		this.values = values;
+	}
+
+	public Row(TableDef table, List<String> keys, List<String> values) {
+		this.table = table;
+		this.keys = keys;
 		this.values = values;
 	}
 
@@ -36,13 +44,11 @@ public class Row {
 		return null;
 	}
 
-
-
 	@Override
 	public String toString() {
 		String str = "";
-		for (String tmp : values) {
-			str += tmp + " ";
+		for (int i = 0; i < keys.size(); i++) {
+			str += keys.get(i) + "-->" + values.get(i) + "\n";
 		}
 		return str;
 	}
@@ -55,7 +61,5 @@ public class Row {
 		values.set(index, value);
 		return true;
 	}
-	
-	
 
 }

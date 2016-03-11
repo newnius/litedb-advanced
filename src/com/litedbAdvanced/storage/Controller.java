@@ -29,7 +29,7 @@ class Controller {
 		if (isBlockNeverUsedBitMap.get(fileId) == null)
 			return false;
 		int blockOffset = getBlockOffset(blockId);
-		isBlockNeverUsedBitMap.get(fileId)[blockOffset - 1] = 0;
+		isBlockNeverUsedBitMap.get(fileId)[blockOffset - 1] = 1;
 		return true;
 	}
 
@@ -208,7 +208,7 @@ class Controller {
 	}
 
 	// 添加行
-	public static boolean insertRow(long RID, Row row) {
+	public static int insertRow(long RID, Row row) {
 		int blockId = Controller.getBlockId(RID);
 		Block block = null;
 		if (lru.get(blockId) == null) {
@@ -220,7 +220,7 @@ class Controller {
 			LiteLogger.info(Main.TAG, "缓存池中有此块，读取" + blockId + "号块");
 		}
 		block.insertRow(RID, row);
-		return true;
+		return 1;
 	}
 
 	private static Block getBlock(int blockId) {
@@ -232,11 +232,11 @@ class Controller {
 		return lru.get(blockId);
 	}
 
-	public synchronized static long nextRID(String tableName) {
+	public synchronized static long nextRID(String fileName) {
 		int blockSum = Config.FILE_SIZE / Config.BLOCK_SIZE;
-		if (!fileIds.containsKey(tableName))
+		if (!fileIds.containsKey(fileName))
 			return 0;
-		int fileId = fileIds.get(tableName);
+		int fileId = fileIds.get(fileName);
 		int blockIdStart = fileId * 1000;
 
 		for (int i = 0; i < blockSum; i++) {

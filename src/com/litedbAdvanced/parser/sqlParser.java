@@ -93,7 +93,7 @@ public class sqlParser {
 	}
 
 	// delete fRom test where key_0=="yjx";
-	public static DeleteStatement delete(String query) {
+	public static String delete(String query) {
 		try {
 			String regexDelete = "\\s*delete\\s+from\\s+(?<table>\\w+)\\s+where\\s+(?<whereClause>[^;]+)\\s*;?\\s*$";
 			Pattern p = Pattern.compile(regexDelete, Pattern.CASE_INSENSITIVE);
@@ -118,7 +118,7 @@ public class sqlParser {
 
 	}
 
-	public static UpdateStatement update(String query) {
+	public static String update(String query) {
 		try {
 			String regexUpdate = "\\s*update\\s+(?<table>\\w+)\\s+set\\s+(?<update>.+)\\s+where\\s+(?<whereClause>[^;]+)\\s*;?\\s*$";
 			Pattern p = Pattern.compile(regexUpdate, Pattern.CASE_INSENSITIVE);
@@ -163,7 +163,7 @@ public class sqlParser {
 	// [desc]] [limit [1,]5]
 	// select * from test where 1==1 and key_0!="vivian" order by key_0 limit
 	// 5,20;
-	public static SelectStatement select(String query) {
+	public static String select(String query) {
 		System.out.println("select " + query);
 		try {
 			String regexSelect = "\\s*select\\s+(?<keys>(\\*|(?:\\w+(?:\\s*,\\s*\\w+)*)))\\s+from\\s+(?<table>\\w+)\\s+where\\s+(?<whereClause>.*)(?:\\s*order\\s+by\\s+(?<orderBy>\\w+)\\s*(?<desc>desc)?)?(?:\\s+limit(?:\\s+(?<offset>\\d+)\\s*,\\s*)?(?<rows>\\d+))?\\s*;?\\s*";
@@ -207,7 +207,6 @@ public class sqlParser {
 					rows = Integer.parseInt(m.group("rows").replaceAll(" ", ""));
 				}
 				check();
-				SelectStatement stat = new SelectStatement(table, keys, whereClause, orderBy, offset, rows);
 				
 				return null;
 			} else {

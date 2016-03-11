@@ -1,7 +1,7 @@
 # database data file
 *.dat
 *.sys
-
+db/
 
 *.class
 

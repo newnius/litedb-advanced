@@ -29,20 +29,22 @@ public class Main {
 		lengths.add(11);
 
 		//TableDef tableDef = new TableDef("test", "id", keyNames, types, lengths, new ArrayList<String>());
-		//createTable(tableDef);
+		// createTable(tableDef);
+		// LiteLogger.info(Main.TAG, tableDef.toString());
 
 		List<String> values = new ArrayList<>();
 		values.add("1");
 		values.add("newnius");
 		values.add("20");
 
-		//Row row = new Row(tableDef, values);
+		// Row row = new Row(tableDef, values);
 
 		// Controller.deleteRow(1001001);
-/*		for (int i = 0; i < 20; i++) {
-			long RID = nextRID(tableDef.getTableName() + ".dat");
-			Controller.insertRow(RID, row);
-		}*/
+		/*
+		 * for (int i = 0; i < 20; i++) { long RID =
+		 * nextRID(tableDef.getTableName() + ".dat"); Controller.insertRow(RID,
+		 * row); }
+		 */
 		//
 		// ow newrow = getRow(1001001);
 		// LiteLogger.info(Main.TAG, newrow.get(1));
@@ -59,14 +61,14 @@ public class Main {
 
 	/* next available RID */
 	public static long nextRID(String tableName) {
-		return Controller.nextRID(tableName);
+		return Controller.nextRID(tableName + ".dat");
 	}
 
 	public static Row getRow(long RID) {
 		return Controller.getRow(RID);
 	}
 
-	public static boolean insertRow(long RID, Row newrow) {
+	public static int insertRow(long RID, Row newrow) {
 		return Controller.insertRow(RID, newrow);
 	}
 
@@ -87,7 +89,7 @@ public class Main {
 	}
 
 	public static TableDef getTableStructure(String tableName) {
-		return Controller.getTableDef(tableName);
+		return Controller.getTableDef(tableName + ".dat");
 	}
 
 }

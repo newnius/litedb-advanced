@@ -21,11 +21,15 @@ public class Main {
 		 * if LOGGER tag is set, it must be the first
 		 * */
 		//LiteLogger.addTag("LOGGER");
-		LiteLogger.addTag("MAIN");
+		//LiteLogger.addTag("MAIN");
 		LiteLogger.addTag("SOCKET");
 		LiteLogger.addTag("TRANSACTION");
 		LiteLogger.addTag("EXECUTOR");
 		LiteLogger.addTag("STORAGE");
+		LiteLogger.addTag("PARSER");
+		LiteLogger.addTag("OPTIMIZER");
+		
+		
 		
 		LiteLogger.info("MAIN", "Database starting...");
 		
@@ -35,6 +39,7 @@ public class Main {
 		com.litedbAdvanced.netio.Main.init();
 		com.litedbAdvanced.storage.Main.init();
 		com.litedbAdvanced.transaction.Main.init();
+		com.litedbAdvanced.parser.Main.init();
 		LiteLogger.info(TAG, "Database started.");
 	}
 	
