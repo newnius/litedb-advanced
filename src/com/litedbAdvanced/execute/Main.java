@@ -81,7 +81,7 @@ public class Main {
 		long rowCount = -1;
 		String orderBy = null;
 		boolean isDesc = false;
-		String whereClause = "1";
+		String whereClause = "1=1";
 
 		if (selectBody instanceof PlainSelect) {
 			PlainSelect plainSelect = (PlainSelect) selectBody;
@@ -150,18 +150,110 @@ public class Main {
 		 * for (Long rid : RIDs) { Row row = transaction.read(rid);
 		 * LiteLogger.info(Main.TAG, row.toString()); } transaction.stopRead();
 		 */
-		LiteLogger.info(Main.TAG, results.size()+" rows seltcted");
+		LiteLogger.info(Main.TAG, results.size() + " rows seltcted");
 		return results;
 	}
 
-	private List<Row> executeUpdate(Update statement) {
+	private int executeUpdate(Update statement) {
+		LiteLogger.info(Main.TAG, "update table " + statement.getTables().get(0).toString());
 
-		return null;
+		String tableName = statement.getTables().get(0).toString();
+		List<String> keys = new ArrayList<>();
+		List<String> values = new ArrayList<>();
+		String whereClause = "1=1";
+
+		List<Column> cols = statement.getColumns();
+		if (cols != null) {
+			Iterator<Column> it = cols.iterator();
+			while (it.hasNext()) {
+				keys.add(it.next().toString());
+			}
+		}
+
+		List<Expression> exp = statement.getExpressions();
+		if (exp != null) {
+			Iterator<Expression> it = exp.iterator();
+			while (it.hasNext()) {
+				values.add(it.next().toString());
+			}
+		}
+
+		// where
+		if (statement.getWhere() != null)
+			whereClause = statement.getWhere().toString();
+
+		if (keys.size() != values.size()) {
+			LiteLogger.info(Main.TAG, "keys and values not match");
+			return 1;
+		}
+
+		TableDef tableDef = com.litedbAdvanced.storage.Main.getTableStructure(tableName);
+		// LiteLogger.info(Main.TAG, tableName);
+
+		/* analyze which RIDs to read */
+		List<Long> RIDs = com.litedbAdvanced.optimizer.Main.RIDsToGet(tableDef, keys, keys);
+
+		WhereParser parser = WhereParser.parseWhere(tableDef, whereClause);
+
+		List<Row> results = new ArrayList<>();
+
+		/* get RIDs to be accessed */
+		for (long RID : RIDs) {
+			Row row = transaction.readForUpdate(RID);
+			String str = parser.getString(row);
+			if (testWhere(str)) {
+				/* do update */
+				for (int i = 0; i < keys.size(); i++) {
+					row.set(keys.get(i), values.get(i));
+				}
+				transaction.updateRow(RID, row);
+				results.add(row);
+			}
+		}
+
+		LiteLogger.info(Main.TAG, results.size() + " rows updated");
+		return 0;
 	}
 
-	private List<Row> executeDelete(Delete statement) {
+	private int executeDelete(Delete statement) {
+		LiteLogger.info(Main.TAG, "delete row");
 
-		return null;
+		String tableName = statement.getTable().toString();
+		String whereClause = "1=1";
+
+		// where
+		Expression where = statement.getWhere();
+		if (where != null)
+			whereClause = where.toString();
+
+		TableDef tableDef = com.litedbAdvanced.storage.Main.getTableStructure(tableName);
+		// LiteLogger.info(Main.TAG, tableName);
+
+		/* analyze which RIDs to read */
+		List<Long> RIDs = com.litedbAdvanced.optimizer.Main.RIDsToGet(tableDef, new ArrayList<>(), new ArrayList<>());
+
+		WhereParser parser = WhereParser.parseWhere(tableDef, whereClause);
+
+		List<Long> results = new ArrayList<>();
+
+		/* get RIDs to be accessed */
+		for (long RID : RIDs) {
+			Row row = transaction.readForUpdate(RID);
+			String str = parser.getString(row);
+			if (testWhere(str)) {
+				results.add(RID);
+			}
+		}
+
+		/* SLock related rows */
+		/*
+		 * for (Long rid : RIDs) { Row row = transaction.read(rid);
+		 * LiteLogger.info(Main.TAG, row.toString()); } transaction.stopRead();
+		 */
+		for (long rid : results)
+			transaction.deleteRow(rid);
+		LiteLogger.info(Main.TAG, results.size() + " rows deleted");
+		return 0;
 	}
 
 	private int executeInsert(Insert statement) {
@@ -193,11 +285,11 @@ public class Main {
 			LiteLogger.info(Main.TAG, "keys and values not match");
 			return 0;
 		}
-		
+
 		Row row = null;
-		if(keys.size() == 0){
-			row = new Row(tableDef, values);			
-		}else{
+		if (keys.size() == 0) {
+			row = new Row(tableDef, values);
+		} else {
 			row = new Row(tableDef, keys, values);
 		}
 
@@ -255,7 +347,6 @@ public class Main {
 			}
 			List<Index> inds = statement.getIndexes();
 			if (inds != null) {
-				System.out.println("indexs: ");
 				Iterator<Index> is = inds.iterator();
 				while (is.hasNext()) {
 					Index temp = is.next();
@@ -267,7 +358,6 @@ public class Main {
 
 					if (temp.getType().equals("primary key")) {
 						primaryKey = indexNames.get(0);
-						indexs.add(indexNames.get(0));
 					} else if (temp.getType().equals("index")) {
 						indexs.add(indexNames.get(0));
 					}

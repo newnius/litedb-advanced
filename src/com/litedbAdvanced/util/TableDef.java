@@ -166,7 +166,7 @@ public class TableDef implements java.io.Serializable {
 		String str = "table name: " + tableName + "\n" + "primary key: " + primaryKey + "\n";
 		str += "columns \n";
 		for (int i = 0; i < keyNames.size(); i++) {
-			str += "name:" + keyNames.get(i) + " type:" + types.get(i) + " type:" + lengths.get(i) + "\n";
+			str += "name:" + keyNames.get(i) + " type:" + types.get(i) + " length:" + lengths.get(i) + "\n";
 		}
 
 		str += "indexs \n";

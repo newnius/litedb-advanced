@@ -30,7 +30,7 @@ public class Main {
 		lengths.add(11);
 
 		TableDef tableDef = new TableDef("test", "id", keyNames, types, lengths, new ArrayList<String>());
-		createTable(tableDef);
+		//createTable(tableDef);
 		// LiteLogger.info(Main.TAG, tableDef.toString());
 
 		List<String> values = new ArrayList<>();

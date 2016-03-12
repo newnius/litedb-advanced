@@ -17,15 +17,34 @@ class IndexManager {
 	public static int init() {
 		allRows = new HashMap<String, Map<Long, Row>>();
 		allRids = new HashMap<String, List<Long>>();
-		
+
 		Map<Integer, TableDef> tableDefs = com.litedbAdvanced.storage.Main.getTableDefs();
 		Set<Integer> fileIds = tableDefs.keySet();
-		for(Integer fileId: fileIds){
+		for (Integer fileId : fileIds) {
 			allRids.put(tableDefs.get(fileId).getTableName(), new ArrayList<>());
 			allRows.put(tableDefs.get(fileId).getTableName(), new HashMap<>());
 		}
-		
+
 		LiteLogger.info(Main.TAG, "indexManager started");
+		return 0;
+	}
+
+	public static int createTable(String tableName) {
+		if (allRids.containsKey(tableName))
+			allRids.remove(tableName);
+		allRids.put(tableName, new ArrayList<>());
+
+		if (allRows.containsKey(tableName))
+			allRows.remove(tableName);
+		allRows.put(tableName, new HashMap<>());
+		return 0;
+	}
+
+	public static int dropTable(String tableName) {
+		if (allRids.containsKey(tableName))
+			allRids.remove(tableName);
+		if (allRows.containsKey(tableName))
+			allRows.remove(tableName);
 		return 0;
 	}
 
@@ -63,8 +82,8 @@ class IndexManager {
 		allRids.get(tableName).add(RID);
 		return 0;
 	}
-	
-	public static List<Long> getAllRIDs(String tableName){
+
+	public static List<Long> getAllRIDs(String tableName) {
 		return allRids.get(tableName);
 	}
 
@@ -84,7 +103,7 @@ class IndexManager {
 			return 0;
 		}
 		Map<Long, Row> rows = allRows.get(tableName);
-		if (rows.containsKey(RID)){
+		if (rows.containsKey(RID)) {
 			rows.remove(RID);
 			rows.put(RID, row);
 		}

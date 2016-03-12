@@ -68,6 +68,12 @@ public class Row {
 		return null;
 	}
 
+	public boolean set(String keyName, String value) {
+		int index = table.getKeyNames().indexOf(keyName);
+		values.set(index, value);
+		return true;
+	}
+
 	public boolean set(int index, String value) {
 		values.set(index, value);
 		return true;

@@ -134,12 +134,15 @@ class Controller {
 
 		/* create index files */
 		List<String> indexs = tableDef.getIndexs();
+		indexs.add(tableDef.getPrimaryKey());
+		
 		for (String index : indexs) {
 			fileId = nextFileId++;
 			fileName = tableDef.getTableName() + "." + index + ".idx";
 			fileIds.put(fileName, fileId);
 			FileManager.createFile(fileId, fileName);
 		}
+		com.litedbAdvanced.index.Main.createTable(tableDef.getTableName());
 		LiteLogger.info(Main.TAG, "create table " + tableDef.getTableName());
 		return 0;
 	}
@@ -158,11 +161,13 @@ class Controller {
 		List<String> indexs = tableDef.getIndexs();
 		for (String index : indexs) {
 			fileName = tableDef.getTableName() + "." + index + ".idx";
+			LiteLogger.info(Main.TAG, index);
 			fileId = fileIds.get(fileName);
 			fileIds.remove(fileId);
 			tableDefs.remove(fileId);
 			FileManager.deleteFile(fileName);
 		}
+		com.litedbAdvanced.index.Main.dropTable(tableName);
 		return 0;
 	}
 

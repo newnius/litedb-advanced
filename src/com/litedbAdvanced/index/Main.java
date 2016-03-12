@@ -36,5 +36,13 @@ public class Main {
 	public static int updateRow(String tableName, long RID, Row row) {
 		return IndexManager.updateRow(tableName, RID, row);
 	}
+	
+	public static int createTable(String tableName){
+		return IndexManager.createTable(tableName);
+	}
+	
+	public static int dropTable(String tableName){
+		return IndexManager.dropTable(tableName);
+	}
 
 }
