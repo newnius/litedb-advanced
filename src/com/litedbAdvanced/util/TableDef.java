@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.litedbAdvanced.execute.Main;
+
 public class TableDef implements java.io.Serializable {
 	/**
 	 * 
@@ -61,6 +63,7 @@ public class TableDef implements java.io.Serializable {
 				break;
 			case TableDef.TYPE_CHAR:
 				rowSize += length;
+				rowSize++;// this byte is to store the length
 				break;
 			case TableDef.TYPE_VARCHAR:
 				rowSize += 8;
@@ -103,10 +106,12 @@ public class TableDef implements java.io.Serializable {
 				byteBuffer.putDouble(Double.parseDouble(value));
 				break;
 			case TableDef.TYPE_CHAR:
+				byte len = (byte)value.getBytes().length;
+				byteBuffer.put(len);
 				byte[] tmp = new byte[length];
 				ByteBuffer tmpByteBuffer = ByteBuffer.wrap(tmp);
 				tmpByteBuffer.put(value.getBytes());
-				byteBuffer.put(tmpByteBuffer.array());
+				byteBuffer.put(tmpByteBuffer.array(), 0, length);
 				break;
 			case TableDef.TYPE_VARCHAR:
 				break;
@@ -136,7 +141,9 @@ public class TableDef implements java.io.Serializable {
 				offset += 8;
 				break;
 			case TableDef.TYPE_CHAR:
-				byte[] chars = ByteBuffer.wrap(Arrays.copyOfRange(bytes, offset, offset + length)).array();
+				int len = ByteBuffer.wrap(Arrays.copyOfRange(bytes, offset, offset + 1)).get();
+				offset++;
+				byte[] chars = ByteBuffer.wrap(Arrays.copyOfRange(bytes, offset, offset + len)).array();
 				values.add(new String(chars));
 				offset += length;
 				break;
@@ -145,6 +152,8 @@ public class TableDef implements java.io.Serializable {
 				values.add(longvalue + "");
 				offset += 8;
 				break;
+			default:
+				LiteLogger.info(Main.TAG, type + " type not found");
 			}
 		}
 

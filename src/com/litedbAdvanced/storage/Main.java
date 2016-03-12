@@ -2,6 +2,7 @@ package com.litedbAdvanced.storage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.litedbAdvanced.util.LiteLogger;
 import com.litedbAdvanced.util.Row;
@@ -28,8 +29,8 @@ public class Main {
 		lengths.add(10);
 		lengths.add(11);
 
-		//TableDef tableDef = new TableDef("test", "id", keyNames, types, lengths, new ArrayList<String>());
-		// createTable(tableDef);
+		TableDef tableDef = new TableDef("test", "id", keyNames, types, lengths, new ArrayList<String>());
+		createTable(tableDef);
 		// LiteLogger.info(Main.TAG, tableDef.toString());
 
 		List<String> values = new ArrayList<>();
@@ -64,6 +65,11 @@ public class Main {
 		return Controller.nextRID(tableName + ".dat");
 	}
 
+	/* next available fileId */
+	public static int nextFileId() {
+		return Controller.nextFileId();
+	}
+
 	public static Row getRow(long RID) {
 		return Controller.getRow(RID);
 	}
@@ -72,24 +78,28 @@ public class Main {
 		return Controller.insertRow(RID, newrow);
 	}
 
-	public static boolean deleteRow(long RID) {
+	public static int deleteRow(long RID) {
 		return Controller.deleteRow(RID);
 	}
 
-	public static boolean updateROw(long RID, Row newrow) {
+	public static int updateRow(long RID, Row newrow) {
 		return Controller.updateRow(RID, newrow);
 	}
 
-	public static boolean createTable(TableDef tableDef) {
+	public static int createTable(TableDef tableDef) {
 		return Controller.createTable(tableDef);
 	}
 
-	public static boolean dropTable(String tableName) {
-		return Controller.deleteTable(tableName);
+	public static int dropTable(String tableName) {
+		return Controller.deleteTable(tableName + ".dat");
 	}
 
 	public static TableDef getTableStructure(String tableName) {
 		return Controller.getTableDef(tableName + ".dat");
+	}
+
+	public static Map<Integer, TableDef> getTableDefs() {
+		return Controller.getTableDefs();
 	}
 
 }

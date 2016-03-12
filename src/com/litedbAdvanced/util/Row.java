@@ -21,6 +21,7 @@ public class Row {
 
 	public Row(TableDef table, byte[] bytes) {
 		this.table = table;
+		this.keys = table.getKeyNames();
 		this.values = table.toStringList(bytes);
 	}
 
@@ -46,15 +47,25 @@ public class Row {
 
 	@Override
 	public String toString() {
-		String str = "";
+		String str = "Row data: \n";
 		for (int i = 0; i < keys.size(); i++) {
-			str += keys.get(i) + "-->" + values.get(i) + "\n";
+			str += keys.get(i) + "-->" + values.get(i) + ",";
 		}
+		str += "\n";
 		return str;
 	}
 
 	public String get(int i) {
 		return values.get(i);
+	}
+
+	public String get(String keyName) {
+		if (table.getKeyNames().contains(keyName)) {
+			int i = table.getKeyNames().indexOf(keyName);
+			if (values.size() >= i)
+				return values.get(i);
+		}
+		return null;
 	}
 
 	public boolean set(int index, String value) {

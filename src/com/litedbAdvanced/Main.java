@@ -28,6 +28,7 @@ public class Main {
 		LiteLogger.addTag("STORAGE");
 		LiteLogger.addTag("PARSER");
 		LiteLogger.addTag("OPTIMIZER");
+		LiteLogger.addTag("INDEX");
 		
 		
 		
@@ -36,8 +37,10 @@ public class Main {
 		/* start each module */
 		// com.litedbAdvanced.memory.Main.init();
 		// com.litedbAdvanced.storage.Main.init();
-		com.litedbAdvanced.netio.Main.init();
+		
 		com.litedbAdvanced.storage.Main.init();
+		com.litedbAdvanced.index.Main.init();
+		com.litedbAdvanced.netio.Main.init();
 		com.litedbAdvanced.transaction.Main.init();
 		com.litedbAdvanced.parser.Main.init();
 		LiteLogger.info(TAG, "Database started.");
@@ -46,6 +49,7 @@ public class Main {
 	private static void close(){
 		/* close each module*/
 		com.litedbAdvanced.netio.Main.close();
+		com.litedbAdvanced.index.Main.close();
 		com.litedbAdvanced.storage.Main.close();
 		com.litedbAdvanced.transaction.Main.close();
 		LiteLogger.info(TAG, "Database closed.");

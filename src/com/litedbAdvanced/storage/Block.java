@@ -58,6 +58,9 @@ public class Block {
 			}
 			FileManager.updateBlock(blockId, this);
 			LiteLogger.info(Main.TAG, "insert row to " + RID);
+
+			String tableName = Controller.getTableDef(Controller.getFileId(RID)).getTableName();
+			com.litedbAdvanced.index.Main.addRow(tableName, RID, row);
 			return true;
 		} catch (Exception ex) {
 			LiteLogger.error(Main.TAG, ex);
@@ -74,6 +77,8 @@ public class Block {
 			data[rowOffset - 1] = 0;
 			FileManager.updateBlock(blockId, this);
 			LiteLogger.info(Main.TAG, "delete row " + RID);
+			String tableName = Controller.getTableDef(Controller.getFileId(RID)).getTableName();
+			com.litedbAdvanced.index.Main.deleteRow(tableName, RID);
 			return true;
 		} catch (Exception ex) {
 			LiteLogger.error(Main.TAG, ex);
@@ -96,6 +101,8 @@ public class Block {
 			}
 			FileManager.updateBlock(blockId, this);
 			LiteLogger.info(Main.TAG, "update row " + RID);
+			String tableName = Controller.getTableDef(Controller.getFileId(RID)).getTableName();
+			com.litedbAdvanced.index.Main.updateRow(tableName, RID, row);
 			return true;
 		} catch (Exception ex) {
 			LiteLogger.error(Main.TAG, ex);

@@ -77,6 +77,10 @@ class Controller {
 		return getTableDef(fileId);
 	}
 
+	public static Map<Integer, TableDef> getTableDefs() {
+		return tableDefs;
+	}
+
 	public static TableDef getTableDef(int fileId) {
 		if (tableDefs.containsKey(fileId))
 			return tableDefs.get(fileId);
@@ -107,17 +111,18 @@ class Controller {
 			isBlockNeverUsedBitMap.put(id, block.data);
 		}
 
-		LiteLogger.info(Main.TAG, "load " + fileIds.size() + " fileId");
-		LiteLogger.info(Main.TAG, "load " + tableDefs.size() + " table def");
-		LiteLogger.info(Main.TAG, "load " + isBlockNeverUsedBitMap.size() + " first block");
+		// LiteLogger.info(Main.TAG, "load " + fileIds.size() + " fileId");
+		// LiteLogger.info(Main.TAG, "load " + tableDefs.size() + " table def");
+		// LiteLogger.info(Main.TAG, "load " + isBlockNeverUsedBitMap.size() + "
+		// first block");
 	}
 
-	public static boolean createTable(TableDef tableDef) {
+	public static int createTable(TableDef tableDef) {
 		String fileName = tableDef.getTableName() + ".dat";
 
-		if (fileIds.containsKey(fileName)){
+		if (fileIds.containsKey(fileName)) {
 			LiteLogger.info(Main.TAG, "create table fail, already exist");
-			return false;
+			return 1;
 		}
 
 		int fileId = nextFileId++;
@@ -135,10 +140,11 @@ class Controller {
 			fileIds.put(fileName, fileId);
 			FileManager.createFile(fileId, fileName);
 		}
-		return true;
+		LiteLogger.info(Main.TAG, "create table " + tableDef.getTableName());
+		return 0;
 	}
 
-	public static boolean deleteTable(String tableName) {
+	public static int deleteTable(String tableName) {
 		int fileId = fileIds.get(tableName);
 		TableDef tableDef = tableDefs.get(fileId);
 		String fileName = tableDef.getTableName() + ".dat";
@@ -157,7 +163,7 @@ class Controller {
 			tableDefs.remove(fileId);
 			FileManager.deleteFile(fileName);
 		}
-		return true;
+		return 0;
 	}
 
 	// 根据 RID 返回行数据
@@ -175,7 +181,7 @@ class Controller {
 	}
 
 	// 更新行数据
-	public static boolean updateRow(long RID, Row row) {
+	public static int updateRow(long RID, Row row) {
 		int blockId = Controller.getBlockId(RID);
 		Block block = null;
 
@@ -188,11 +194,11 @@ class Controller {
 			LiteLogger.info(Main.TAG, "缓存池中有此块，读取" + blockId + "号块");
 		}
 		block.updateRow(RID, row);
-		return true;
+		return 0;
 	}
 
 	// 删除行数据
-	public static boolean deleteRow(long RID) {
+	public static int deleteRow(long RID) {
 		int blockId = Controller.getBlockId(RID);
 		Block block = null;
 		if (lru.get(blockId) == null) {
@@ -204,7 +210,7 @@ class Controller {
 			LiteLogger.info(Main.TAG, "缓存池中有此块，读取" + blockId + "号块");
 		}
 		block.deleteRow(RID);
-		return true;
+		return 0;
 	}
 
 	// 添加行
@@ -230,6 +236,10 @@ class Controller {
 			LiteLogger.info(Main.TAG, "缓存池中无此块，读取" + blockId + "号块");
 		}
 		return lru.get(blockId);
+	}
+
+	public static int nextFileId() {
+		return nextFileId;
 	}
 
 	public synchronized static long nextRID(String fileName) {

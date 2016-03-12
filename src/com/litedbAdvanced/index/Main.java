@@ -20,6 +20,10 @@ public class Main {
 	public static List<Row> getAllRows(String tableName) {
 		return IndexManager.getAllRows(tableName);
 	}
+	
+	public static List<Long> getAllRIDs(String tableName) {
+		return IndexManager.getAllRIDs(tableName);
+	}
 
 	public static int addRow(String tableName, long RID, Row row) {
 		return IndexManager.addRow(tableName, RID, row);

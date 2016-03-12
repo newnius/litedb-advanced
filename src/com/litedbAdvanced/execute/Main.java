@@ -72,7 +72,7 @@ public class Main {
 	}
 
 	private List<Row> executeSelect(Select statement) {
-		LiteLogger.info(Main.TAG, "select");
+		LiteLogger.info(Main.TAG, statement.getSelectBody().toString());
 		SelectBody selectBody = statement.getSelectBody();
 
 		String tableName = null;
@@ -81,7 +81,7 @@ public class Main {
 		long rowCount = -1;
 		String orderBy = null;
 		boolean isDesc = false;
-		String whereClause = null;
+		String whereClause = "1";
 
 		if (selectBody instanceof PlainSelect) {
 			PlainSelect plainSelect = (PlainSelect) selectBody;
@@ -100,7 +100,8 @@ public class Main {
 
 			// where
 			Expression where = plainSelect.getWhere();
-			whereClause = where.toString();
+			if (where != null)
+				whereClause = where.toString();
 
 			// orderByElements
 			List<OrderByElement> orderByElements = plainSelect.getOrderByElements();
@@ -118,24 +119,39 @@ public class Main {
 			}
 
 			Limit limit = plainSelect.getLimit();
-			offset = limit.getOffset();
-			rowCount = limit.getRowCount();
-
+			if (limit != null) {
+				offset = limit.getOffset();
+				rowCount = limit.getRowCount();
+			}
 		}
 
 		TableDef tableDef = com.litedbAdvanced.storage.Main.getTableStructure(tableName);
-		LiteLogger.info(Main.TAG, tableName);
+		// LiteLogger.info(Main.TAG, tableName);
 
 		/* analyze which RIDs to read */
-		/* get RIDs to be accessed */
 		List<Long> RIDs = com.litedbAdvanced.optimizer.Main.RIDsToGet(tableDef, keys, keys);
+
+		WhereParser parser = WhereParser.parseWhere(tableDef, whereClause);
+
+		List<Row> results = new ArrayList<>();
+
+		/* get RIDs to be accessed */
+		for (long RID : RIDs) {
+			Row row = transaction.read(RID);
+			String str = parser.getString(row);
+			if (testWhere(str)) {
+				results.add(row);
+			}
+		}
+		transaction.stopRead();
 
 		/* SLock related rows */
 		/*
 		 * for (Long rid : RIDs) { Row row = transaction.read(rid);
 		 * LiteLogger.info(Main.TAG, row.toString()); } transaction.stopRead();
 		 */
-		return null;
+		LiteLogger.info(Main.TAG, results.size()+" rows seltcted");
+		return results;
 	}
 
 	private List<Row> executeUpdate(Update statement) {
@@ -177,16 +193,21 @@ public class Main {
 			LiteLogger.info(Main.TAG, "keys and values not match");
 			return 0;
 		}
+		
+		Row row = null;
+		if(keys.size() == 0){
+			row = new Row(tableDef, values);			
+		}else{
+			row = new Row(tableDef, keys, values);
+		}
 
-		Row row = new Row(tableDef, keys, values);
 		LiteLogger.info(Main.TAG, row.toString());
 		/*
 		 * do not consider "insert select" now if (statement.getSelect() !=
 		 * null) executeSelect(statement.getSelect());
 		 */
 		long nextRID = com.litedbAdvanced.storage.Main.nextRID(tableName);
-		return com.litedbAdvanced.storage.Main.insertRow(nextRID, row);
-		// transaction.insert(nextRID, row);
+		return transaction.insertRow(nextRID, row);
 	}
 
 	private int executeCreateTable(CreateTable statement) {
@@ -256,17 +277,12 @@ public class Main {
 
 		TableDef tableDef = new TableDef(tableName, primaryKey, keyNames, types, lengths, indexs);
 		LiteLogger.info(Main.TAG, tableDef.toString());
-		if (com.litedbAdvanced.storage.Main.createTable(tableDef)) {
-			return 1;
-		}
-		return 0;
-
+		return transaction.createTable(tableDef);
 	}
 
 	private int executeDropTable(Drop statement) {
 		if (statement.getType().equals("table"))
-			if (com.litedbAdvanced.storage.Main.dropTable(statement.getName()))
-				return 1;
+			return transaction.dropTable(statement.getName());
 		return 0;
 	}
 
@@ -369,14 +385,14 @@ public class Main {
 
 	public static boolean testWhere(String whereClause) {
 		String query = whereClause;
-		query = query.replaceAll("and", "&&").replaceAll("or", "||");
 		try {
 			String res = scriptEngine.eval(query) + "";
+			LiteLogger.info(Main.TAG, whereClause + "(" + res + ")");
 			return res.equals("true");
 		} catch (ScriptException ex) {
-
+			LiteLogger.error(Main.TAG, ex);
+			return false;
 		}
-		return true;
 	}
 
 }

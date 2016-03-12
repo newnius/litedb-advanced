@@ -4,15 +4,27 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.litedbAdvanced.util.LiteLogger;
 import com.litedbAdvanced.util.Row;
+import com.litedbAdvanced.util.TableDef;
 
 class IndexManager {
 	private static Map<String, Map<Long, Row>> allRows;
+	private static Map<String, List<Long>> allRids;
 
 	public static int init() {
 		allRows = new HashMap<String, Map<Long, Row>>();
+		allRids = new HashMap<String, List<Long>>();
+		
+		Map<Integer, TableDef> tableDefs = com.litedbAdvanced.storage.Main.getTableDefs();
+		Set<Integer> fileIds = tableDefs.keySet();
+		for(Integer fileId: fileIds){
+			allRids.put(tableDefs.get(fileId).getTableName(), new ArrayList<>());
+			allRows.put(tableDefs.get(fileId).getTableName(), new HashMap<>());
+		}
+		
 		LiteLogger.info(Main.TAG, "indexManager started");
 		return 0;
 	}
@@ -48,7 +60,12 @@ class IndexManager {
 		}
 		Map<Long, Row> indexs = allRows.get(tableName);
 		indexs.put(RID, row);
+		allRids.get(tableName).add(RID);
 		return 0;
+	}
+	
+	public static List<Long> getAllRIDs(String tableName){
+		return allRids.get(tableName);
 	}
 
 	public static int deleteRow(String tableName, long RID) {
@@ -58,6 +75,7 @@ class IndexManager {
 		Map<Long, Row> rows = allRows.get(tableName);
 		if (rows.containsKey(RID))
 			rows.remove(RID);
+		allRids.get(tableName).remove(RID);
 		return 0;
 	}
 
