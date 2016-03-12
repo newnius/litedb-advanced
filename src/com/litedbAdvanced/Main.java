@@ -11,7 +11,9 @@ public class Main {
 	public static void main(String[] args) {
 		init();
 		String command;
+		com.litedbAdvanced.execute.Main executor = new com.litedbAdvanced.execute.Main();
 		while ((command = readCommand()) != null) {
+			//executor.execute(command);
 			executeCommand(command);
 		}
 	}
@@ -20,8 +22,8 @@ public class Main {
 		/* select which log (identified by tag) to be shown 
 		 * if LOGGER tag is set, it must be the first
 		 * */
-		//LiteLogger.addTag("LOGGER");
-		//LiteLogger.addTag("MAIN");
+		LiteLogger.addTag("LOGGER");
+		LiteLogger.addTag("MAIN");
 		LiteLogger.addTag("SOCKET");
 		LiteLogger.addTag("TRANSACTION");
 		LiteLogger.addTag("EXECUTOR");

@@ -14,6 +14,7 @@ class Controller {
 	private static Map<String, Integer> fileIds;
 	private static Map<Integer, TableDef> tableDefs;
 	private static int nextFileId = 1;
+	private static long nextRID = -1;
 	private static Map<Integer, byte[]> isBlockNeverUsedBitMap;
 
 	public static boolean isBlockNeverUsed(int blockId) {
@@ -135,7 +136,7 @@ class Controller {
 		/* create index files */
 		List<String> indexs = tableDef.getIndexs();
 		indexs.add(tableDef.getPrimaryKey());
-		
+
 		for (String index : indexs) {
 			fileId = nextFileId++;
 			fileName = tableDef.getTableName() + "." + index + ".idx";
@@ -252,10 +253,14 @@ class Controller {
 		if (!fileIds.containsKey(fileName))
 			return 0;
 		int fileId = fileIds.get(fileName);
-		int blockIdStart = fileId * 1000;
+
+		int blockIdStart = fileId * 1000 + 1;
+		if (nextRID != -1 && getFileId(nextRID) == fileId) {
+			blockIdStart =  getBlockId(nextRID);
+		}
 
 		for (int i = 0; i < blockSum; i++) {
-			int blockId = blockIdStart + i + 1;
+			int blockId = blockIdStart + i;
 			Block block = getBlock(blockId);
 			lru.put(blockId, block);
 
@@ -267,8 +272,9 @@ class Controller {
 			long RID = blockId * 1000;
 			int nextRowOffset = block.nextRowOffset();
 			if (nextRowOffset != -1) {
-				LiteLogger.info(Main.TAG, "nextRID = " + RID + nextRowOffset);
-				return RID + nextRowOffset;
+				nextRID = RID + nextRowOffset;
+				LiteLogger.info(Main.TAG, "nextRID = " + nextRID);
+				return nextRID;
 			} else {
 				LiteLogger.info(Main.TAG, "no space available in block " + blockId);
 			}

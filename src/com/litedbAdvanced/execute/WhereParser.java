@@ -1,5 +1,7 @@
 package com.litedbAdvanced.execute;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,6 +22,22 @@ public class WhereParser {
 	public static WhereParser parseWhere(TableDef tableDef, String whereClause) {
 		WhereParser tree = new WhereParser(tableDef, whereClause);
 		return tree;
+	}
+	
+	public static List<String> getKeys(TableDef tableDef, String whereClause){
+		List<String> keys = new ArrayList<String>();
+		String regex = "(?<key>\\b[a-zA-Z0-9_]+\\b)";
+		Pattern p = Pattern.compile(regex);
+		Matcher m = p.matcher(whereClause);
+		while (m.find()) {
+			if (m.group() != null) {
+				// 先将前面的字符串加上，然后加上此次的字符串
+				if (!tableDef.getKeyNames().contains(m.group())) {
+					keys.add(m.group());
+				}
+			}
+		}
+		return keys;
 	}
 
 	public String getString(Row row) {

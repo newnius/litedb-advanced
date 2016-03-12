@@ -11,7 +11,7 @@ public class Main {
 	public static final String TAG = "PARSER";
 
 	public static boolean init() {
-		 test();
+		//test();
 		LiteLogger.info(Main.TAG, "started");
 		return true;
 	}

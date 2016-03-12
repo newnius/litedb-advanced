@@ -44,31 +44,41 @@ public class Main {
 		this.autoCommit = autoCommit;
 	}
 
-	public String execute(String query) {
-		if (transaction == null)
-			transaction = new Transaction();
+	public Object execute(String query) {
+		try {
+			Object res = null;
+			if (transaction == null)
+				transaction = new Transaction();
+			
+			if(executeCommand(query)){
+				return 0;
+			}
 
-		Statement statement = com.litedbAdvanced.parser.Main.parse(query);
-		if (statement == null) {
+			Statement statement = com.litedbAdvanced.parser.Main.parse(query);
+			if (statement == null) {
+				res = 0;
+			} else if (statement instanceof Select) {
+				res = executeSelect((Select) statement);
+			} else if (statement instanceof Delete) {
+				res = executeDelete((Delete) statement);
+			} else if (statement instanceof Insert) {
+				res = executeInsert((Insert) statement);
+			} else if (statement instanceof Update) {
+				res = executeUpdate((Update) statement);
+			} else if (statement instanceof CreateTable) {
+				res = executeCreateTable((CreateTable) statement);
+			} else if (statement instanceof Drop) {
+				res = executeDropTable((Drop) statement);
+			}
+
+			if (autoCommit)
+				commit();
+
+			return res;
+		} catch (Exception ex) {
+			LiteLogger.error(Main.TAG, ex);
 			return null;
-		} else if (statement instanceof Select) {
-			executeSelect((Select) statement);
-		} else if (statement instanceof Delete) {
-			executeDelete((Delete) statement);
-		} else if (statement instanceof Insert) {
-			executeInsert((Insert) statement);
-		} else if (statement instanceof Update) {
-			executeUpdate((Update) statement);
-		} else if (statement instanceof CreateTable) {
-			executeCreateTable((CreateTable) statement);
-		} else if (statement instanceof Drop) {
-			executeDropTable((Drop) statement);
 		}
-
-		if (autoCommit)
-			commit();
-
-		return query;
 	}
 
 	private List<Row> executeSelect(Select statement) {
@@ -191,7 +201,8 @@ public class Main {
 		// LiteLogger.info(Main.TAG, tableName);
 
 		/* analyze which RIDs to read */
-		List<Long> RIDs = com.litedbAdvanced.optimizer.Main.RIDsToGet(tableDef, keys, keys);
+		List<Long> RIDs = com.litedbAdvanced.optimizer.Main.RIDsToGet(tableDef, keys,
+				WhereParser.getKeys(tableDef, whereClause));
 
 		WhereParser parser = WhereParser.parseWhere(tableDef, whereClause);
 
@@ -309,9 +320,6 @@ public class Main {
 		List<Integer> types = new ArrayList<>();
 		List<Integer> lengths = new ArrayList<>();
 		List<String> indexs = new ArrayList<>();
-		lengths.add(11);
-		lengths.add(10);
-		lengths.add(11);
 
 		List<ColumnDefinition> columnDefinitions = statement.getColumnDefinitions();
 		if (columnDefinitions != null) {
@@ -364,7 +372,10 @@ public class Main {
 				}
 			}
 		}
-
+		if (keyNames.size() != lengths.size()) {
+			LiteLogger.info(Main.TAG, "key size and length size not match");
+			return 1;
+		}
 		TableDef tableDef = new TableDef(tableName, primaryKey, keyNames, types, lengths, indexs);
 		LiteLogger.info(Main.TAG, tableDef.toString());
 		return transaction.createTable(tableDef);
@@ -376,19 +387,14 @@ public class Main {
 		return 0;
 	}
 
-	public void executeCommand(String command) {
+	public boolean executeCommand(String command) {
 		if (command == null)
-			return;
+			return false;
 		String[] params = command.split(" ");
+		boolean isSimpleCommand = true;
 		switch (params[0]) {
 		case "begin":
 			begin();
-			break;
-		case "read":
-			read(params);
-			break;
-		case "write":
-			write(params);
 			break;
 		case "savepoint":
 			savepoint(params);
@@ -399,11 +405,11 @@ public class Main {
 		case "commit":
 			commit();
 			break;
-
 		default:
-			LiteLogger.info(TAG, "Unknown command.");
+			isSimpleCommand = false;
+			// LiteLogger.info(TAG, "Unknown command.");
 		}
-		return;
+		return isSimpleCommand;
 	}
 
 	public void begin() {

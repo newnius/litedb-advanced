@@ -33,8 +33,10 @@ public class Transaction {
 	 * 
 	 */
 	public Row read(long rid) {
-		LockManager.SLockRID(rid);
-		SLockedRIDs.add(rid);
+		if (!XLockedRIDs.contains(rid)) {
+			LockManager.SLockRID(rid);
+			SLockedRIDs.add(rid);
+		}
 		LiteLogger.info(Main.TAG, "read " + rid);
 		return com.litedbAdvanced.storage.Main.getRow(rid);
 	}
@@ -59,6 +61,7 @@ public class Transaction {
 
 	public int insertRow(long RID, Row row) {
 		XLockRID(RID);
+		LogManager.write(transactionId, sqlId++);
 		int result = com.litedbAdvanced.storage.Main.insertRow(RID, row);
 		if (result == 0)
 			changedRows.put(RID, row);
@@ -70,14 +73,16 @@ public class Transaction {
 		int result = com.litedbAdvanced.storage.Main.updateRow(RID, row);
 		if (result == 0)
 			changedRows.put(RID, row);
+		LogManager.write(transactionId, sqlId++);
 		return result;
 	}
 
 	public int deleteRow(long RID) {
 		XLockRID(RID);
-		int result= com.litedbAdvanced.storage.Main.deleteRow(RID);
+		int result = com.litedbAdvanced.storage.Main.deleteRow(RID);
 		if (result == 0)
 			changedRows.remove(RID);
+		LogManager.write(transactionId, sqlId++);
 		return result;
 	}
 
@@ -110,8 +115,7 @@ public class Transaction {
 	public void rollback(String pointName) {
 		if (savedPoints.containsKey(pointName)) {
 			int sqlId = savedPoints.get(pointName);
-			while (LogManager.pop(transactionId, sqlId) != null)
-				;
+			while (LogManager.pop(transactionId, sqlId) != null);
 			LiteLogger.info(Main.TAG, "rollback to " + pointName);
 		} else {
 			LiteLogger.info(Main.TAG, "savepoint " + pointName + " not exist.");
@@ -128,8 +132,7 @@ public class Transaction {
 
 	public void commit() {
 		/* write log to file */
-		while (LogManager.read(transactionId, sqlId) != null)
-			;
+		while (LogManager.read(transactionId, sqlId) != null);
 
 		/* free locks */
 		while (!XLockedRIDs.isEmpty()) {

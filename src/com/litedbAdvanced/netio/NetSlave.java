@@ -32,19 +32,20 @@ class NetSlave extends Thread{
 
             while ( Main.isRemoteAccessAvailable()) {
                 String query = reader.readLine();
+                query = query.replaceAll(";", "");
                 LiteLogger.info(TAG, "Received：" + query);
                 
                 if(query.toLowerCase().equals("quit;")){
                     break;
                 } else {
-                    out.println(executor.execute(query.replace(";", "")));
+                	Object res =executor.execute(query.replace(";", "")); 
+                    out.println(new Gson().toJson(res));
                 }
             }
             out.println(new Gson().toJson(new Message(Message.CONNECTION_CLOSED, "")));
             socket.close();
         } catch (Exception ex) {
         	LiteLogger.info(TAG, socket.getInetAddress().getHostAddress() + ":" + socket.getPort() + " disconnected.");
-        	LiteLogger.error(Main.TAG, ex);
         }
     }
     
